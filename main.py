@@ -11,44 +11,35 @@ templates = Jinja2Templates(directory="templates")
 # (Optional) Static files mount (CSS/JS)
 # app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# --- NEW: Root Route ---
-# This fixes the "404 Not Found" error when you first open the app.
-@app.get("/suppliers", response_class=HTMLResponse)
-async def read_suppliers(request: Request):
-    suppliers_data = [
+@app.get("/products", response_class=HTMLResponse)
+async def product_list(request: Request):
+    products_data = [
         {
-            "name": "Acme Corp",
-            "contact": "+1 (555) 010-9988",
-            "products": [  # <--- RENAMED FROM "items"
-                {"name": "Steel Rods", "unit_price": 15.50}, 
-                {"name": "Bolts", "unit_price": 0.50}
-            ],
-            "payment_status": "Due",
-            "total_due": 1250.00,
-            "last_order_qty": 500,
-            "last_order_received": True,
-            "last_order_date": "2024-06-15"  # <--- NEW FIELD
+            "id": 101,
+            "name": "Nike T-Shirt",
+            "description": "Cotton round neck t-shirt",
+            "category": "Clothing",
+            "supplier": "Acme Corp",
+            "variants": [
+                {"sku": "TSH-RED-L", "attributes": "Red, Large", "price": 25.00, "stock": 50},
+                {"sku": "TSH-RED-M", "attributes": "Red, Medium", "price": 25.00, "stock": 12},
+                {"sku": "TSH-BLK-L", "attributes": "Black, Large", "price": 26.50, "stock": 5}
+            ]
         },
         {
-            "name": "Global Tech",
-            "contact": "+1 (555) 012-3456",
-            "products": [{"name": "Monitors", "unit_price": 120.00}], # <--- RENAMED
-            "payment_status": "Settled",
-            "total_due": 0,
-            "last_order_qty": 10,
-            "last_order_received": True,
-            "last_order_date": "2024-06-10"  # <--- NEW FIELD
-        },
-        {
-            "name": "Fresh Supplies",
-            "contact": "+44 20 7946 0958",
-            "products": [{"name": "Packaging", "unit_price": 2.00}], # <--- RENAMED
-            "payment_status": "Due",
-            "total_due": 300.00,
-            "last_order_qty": 150,
-            "last_order_received": False,
-            "last_order_date": "2024-06-12"  # <--- NEW FIELD
+            "id": 102,
+            "name": "Gaming Monitor",
+            "description": "27-inch 144Hz IPS Display",
+            "category": "Electronics",
+            "supplier": "Global Tech",
+            "variants": [
+                {"sku": "MON-27-144", "attributes": "27 Inch, Standard", "price": 299.99, "stock": 8}
+            ]
         }
     ]
-    
-    return templates.TemplateResponse("suppliers.html", {"request": request, "suppliers": suppliers_data})
+    return templates.TemplateResponse("products_list.html", {"request": request, "products": products_data})
+
+# --- Route 2: Product Create Form ---
+@app.get("/products/create", response_class=HTMLResponse)
+async def product_create(request: Request):
+    return templates.TemplateResponse("product_create.html", {"request": request})

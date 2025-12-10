@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Create Product - Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Create New Product</h3>
+            <a href="/products" class="btn btn-outline-secondary">Back to List</a>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form action="/products/create" method="post"> <div class="mb-3">
+                        <label for="productName" class="form-label fw-bold">Product Name</label>
+                        <input type="text" class="form-control" id="productName" placeholder="e.g. Cotton T-Shirt">
+                        <div class="form-text">This is the generic parent name (without size/color).</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label fw-bold">Category</label>
+                            <select class="form-select" id="category">
+                                <option selected disabled>Select Category...</option>
+                                <option value="clothing">Clothing</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="furniture">Furniture</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="supplier" class="form-label fw-bold">Supplier</label>
+                            <select class="form-select" id="supplier">
+                                <option selected disabled>Select Supplier...</option>
+                                <option value="acme">Acme Corp</option>
+                                <option value="global">Global Tech</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-bold">Description</label>
+                        <textarea class="form-control" id="description" rows="3" placeholder="Enter product details..."></textarea>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-light border me-2">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">Create Product</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
