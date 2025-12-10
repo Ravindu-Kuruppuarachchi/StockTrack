@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Suppliers - Inventory{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card border-0 shadow-sm text-white bg-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Suppliers</h5>
+                <h2 class="display-6">124</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card border-0 shadow-sm text-white bg-danger h-100">
+            <div class="card-body">
+                <h5 class="card-title">Payment Due</h5>
+                <h2 class="display-6">8</h2>
+                <small>Suppliers needing payment</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card border-0 shadow-sm text-white bg-success h-100">
+            <div class="card-body">
+                <h5 class="card-title">Orders This Month</h5>
+                <h2 class="display-6">12</h2>
+                <small>Total purchase orders sent</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex align-items-center">
+                <h5 class="mb-0">Supplier Directory</h5>
+                <div class="ms-auto">
+                    <button class="btn btn-sm btn-outline-dark">Add New Supplier</button>
+                    <button class="btn btn-sm btn-primary">Place Order</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Supplier Name</th>
+                                <th>Contact</th> 
+                                <th>Items & Unit Price</th>
+                                <th>Payment Status</th>
+                                <th>Total Due</th>
+                                <th>Last Order Status</th> 
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for supplier in suppliers %}
+                            <tr>
+                                <td class="fw-bold">{{ supplier.name }}</td>
+                                
+                                <td>
+                                    <i class="bi bi-telephone-fill text-muted small"></i> 
+                                    {{ supplier.contact }}
+                                </td>
+
+                                <td>
+                                    <ul class="list-unstyled mb-0 small">
+                                        {% for item in supplier.products %}
+                                        <li>{{ item.name }} <span class="text-muted">(${{ item.unit_price }})</span></li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+
+                                <td>
+                                    {% if supplier.payment_status == 'Due' %}
+                                        <span class="badge bg-danger">Payment Due</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Settled</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if supplier.payment_status == 'Due' %}
+                                        <span class="text-danger fw-bold">${{ supplier.total_due }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if supplier.last_order_received %}
+                                        <span class="badge bg-info text-dark">Received</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% endif %}
+                                    <div class="small text-muted mt-1">Qty: {{ supplier.last_order_qty }}</div>
+                                </td>
+
+                                <td class="text-muted small">
+                                    {{ supplier.last_order_date }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
