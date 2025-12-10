@@ -2,6 +2,12 @@ from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from passlib.context import CryptContext
+from database import get_db, User
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI(title="Inventory Management System")
 
@@ -13,23 +19,35 @@ templates = Jinja2Templates(directory="templates")
 async def root():
     return RedirectResponse(url="/login")
 
-# --- LOGIN ROUTES ---
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+
 @app.post("/login")
-async def login_submit(request: Request, email: str = Form(...), password: str = Form(...)):
-    # YOUR UPDATED CREDENTIALS
-    if email == "admin@isa.com" and password == "airarabia":
-        response = RedirectResponse(url="/dashboard", status_code=303)
-        response.set_cookie(key="user_session", value="logged_in")
-        return response
-    else:
+async def login_submit(
+    request: Request, 
+    email: str = Form(...), 
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    # 1. Find user by email
+    user = db.query(User).filter(User.email == email).first()
+
+    # 2. Verify password (DIRECT COMPARISON)
+    # We simply check if the typed password matches the database string exactly
+    if not user or password != user.password:
         return templates.TemplateResponse("login.html", {
             "request": request, 
             "error": "Invalid email or password"
         })
+    
+    # 3. Success
+    response = RedirectResponse(url="/dashboard", status_code=303)
+    #response.set_cookie(key="user_session", value=user.email)
+    return response
+
 
 @app.get("/logout")
 async def logout():
