@@ -38,7 +38,6 @@
             <div class="card-header bg-white d-flex align-items-center">
                 <h5 class="mb-0">Supplier Directory</h5>
                 <div class="ms-auto">
-                    <button class="btn btn-sm btn-outline-dark">Add New Supplier</button>
                     <button class="btn btn-sm btn-primary">Place Order</button>
                 </div>
             </div>
@@ -75,7 +74,7 @@
                                 </td>
 
                                 <td>
-                                    {% if supplier.payment_status == 'Due' %}
+                                    {% if supplier.payment_status == True %}
                                         <span class="badge bg-danger">Payment Due</span>
                                     {% else %}
                                         <span class="badge bg-success">Settled</span>
@@ -83,7 +82,7 @@
                                 </td>
 
                                 <td>
-                                    {% if supplier.payment_status == 'Due' %}
+                                    {% if supplier.payment_status == True %}
                                         <span class="text-danger fw-bold">${{ supplier.total_due }}</span>
                                     {% else %}
                                         <span class="text-muted">-</span>
@@ -99,8 +98,14 @@
                                     <div class="small text-muted mt-1">Qty: {{ supplier.last_order_qty }}</div>
                                 </td>
 
-                                <td class="text-muted small">
-                                    {{ supplier.last_order_date }}
+                                <td>
+                                    {{supplier.last_order_date}}
+                                </td>
+                                <td class="text-end">
+                                    <a href="/orders/new?supplier_id={{ supplier.id }}" class="btn btn-sm btn-primary">
+                                        Place Order
+                                    </a>
+                                    <button class="btn btn-sm btn-light border ms-1">Edit</button>
                                 </td>
                             </tr>
                             {% endfor %}
