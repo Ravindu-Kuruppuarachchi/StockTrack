@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Inventory{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card border-0 shadow-sm text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Products</h5>
+                <h2 class="display-6">124</h2>
+                <small>Across 12 Categories</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-0 shadow-sm text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Low Stock</h5>
+                <h2 class="display-6">8</h2>
+                <small>Items below threshold</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card border-0 shadow-sm text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Orders Today</h5>
+                <h2 class="display-6">12</h2>
+                <small>Pending processing</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Recent Stock Movements</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Nike T-Shirt (Red, L)</td>
+                            <td><span class="badge bg-success">IN</span></td>
+                            <td>+50</td>
+                            <td>10 mins ago</td>
+                        </tr>
+                        <tr>
+                            <td>Gaming Laptop</td>
+                            <td><span class="badge bg-danger">OUT</span></td>
+                            <td>-1</td>
+                            <td>1 hour ago</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
