@@ -26,26 +26,42 @@
                         <th>Total Cost</th>
                         <th>Date</th>
                         <th>Status</th>
+                        <th>Payment Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
                     <tr>
                         <td class="fw-bold">#{{ order.id }}</td>
-                        
                         <td>{{ order.supplier.name }}</td> 
-                        
                         <td>{{ order.product_names }}</td>
-                        
                         <td>{{ order.quantity }}</td>
                         <td>${{ order.total_cost }}</td>
                         <td>{{ order.order_date }}</td>
                         
                         <td>
-                            {% if order.status == 'Pending' %}
-                                <span class="badge bg-warning text-dark">Pending</span>
-                            {% else %}
+                            {% if order.status %}
                                 <span class="badge bg-success">Received</span>
+                            {% else %}
+                                <form action="/orders/{{ order.id }}/update" method="post">
+                                    <input type="hidden" name="action" value="receive">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        Mark Received
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if order.payment_status %}
+                                <span class="badge bg-success">Settled</span>
+                            {% else %}
+                                <form action="/orders/{{ order.id }}/update" method="post">
+                                    <input type="hidden" name="action" value="pay">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning text-dark">
+                                        Mark Paid
+                                    </button>
+                                </form>
                             {% endif %}
                         </td>
                     </tr>

@@ -3,34 +3,6 @@
 {% block title %}Suppliers - Inventory{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-3 mb-4">
-        <div class="card border-0 shadow-sm text-white bg-primary h-100">
-            <div class="card-body">
-                <h5 class="card-title">Total Suppliers</h5>
-                <h2 class="display-6">124</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card border-0 shadow-sm text-white bg-danger h-100">
-            <div class="card-body">
-                <h5 class="card-title">Payment Due</h5>
-                <h2 class="display-6">8</h2>
-                <small>Suppliers needing payment</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card border-0 shadow-sm text-white bg-success h-100">
-            <div class="card-body">
-                <h5 class="card-title">Orders This Month</h5>
-                <h2 class="display-6">12</h2>
-                <small>Total purchase orders sent</small>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="row mt-4">
     <div class="col-md-12">
@@ -48,7 +20,7 @@
                             <tr>
                                 <th>Supplier Name</th>
                                 <th>Contact</th> 
-                                <th>Items & Unit Price</th>
+                                <th>Items</th>
                                 <th>Payment Status</th>
                                 <th>Total Due</th>
                                 <th>Last Order Status</th> 
@@ -68,13 +40,13 @@
                                 <td>
                                     <ul class="list-unstyled mb-0 small">
                                         {% for item in supplier.products %}
-                                        <li>{{ item.name }} <span class="text-muted">(${{ item.unit_price }})</span></li>
+                                        <li>{{ item.name }} </li>
                                         {% endfor %}
                                     </ul>
                                 </td>
 
                                 <td>
-                                    {% if supplier.payment_status == True %}
+                                    {% if supplier.payment_status == False %}
                                         <span class="badge bg-danger">Payment Due</span>
                                     {% else %}
                                         <span class="badge bg-success">Settled</span>
@@ -82,7 +54,7 @@
                                 </td>
 
                                 <td>
-                                    {% if supplier.payment_status == True %}
+                                    {% if supplier.payment_status == False %}
                                         <span class="text-danger fw-bold">${{ supplier.total_due }}</span>
                                     {% else %}
                                         <span class="text-muted">-</span>

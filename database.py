@@ -65,7 +65,8 @@ class Order(Base):
     quantity = Column(Integer)
     total_cost = Column(Float)
     order_date = Column(Date)
-    status = Column(String, default="Pending")
+    status = Column(Boolean, default=False)
+    payment_status = Column(Boolean, default=False)
     
     # Relationship to link Order -> Supplier
     supplier = relationship("Supplier", backref="all_orders")

@@ -36,7 +36,7 @@ async def login_submit(
             "error": "Invalid email or password"
         })
     
-    response = RedirectResponse(url="/dashboard", status_code=303)
+    response = RedirectResponse(url="/products", status_code=303)
     return response
 
 @app.get("/logout")
@@ -45,9 +45,9 @@ async def logout():
     response.delete_cookie("user_session")
     return response
 
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+# @app.get("/dashboard", response_class=HTMLResponse)
+# async def dashboard(request: Request):
+#     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 # --- SUPPLIERS ROUTES ---
 
@@ -58,9 +58,9 @@ async def read_suppliers(request: Request, db: Session = Depends(get_db)):
     suppliers_list = []
     for s in suppliers_db:
         # Handle product string splitting safely
-        product_list = [{"name": p.strip(), "unit_price": 0} for p in s.products.split(",")] if s.products else []
-        
+        product_list = [{"name": p.strip(), "unit_price": 0} for p in s.products.split(",")] 
         suppliers_list.append({
+            
             "id": s.id,
             "name": s.name,
             "contact": s.contact,
@@ -115,8 +115,8 @@ async def orders_page(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("orders.html", {"request": request, "orders": orders_data})
 
 # --- 2. PLACE ORDER FORM PAGE ---
-@app.get("/orders/place", response_class=HTMLResponse)
-async def place_order_form(request: Request, supplier_id: int = None, db: Session = Depends(get_db)):
+@app.get("/orders/new", response_class=HTMLResponse)
+async def place_order_form(request: Request, supplier_id: int, db: Session = Depends(get_db)):
     suppliers_db = db.query(Supplier).all()
     return templates.TemplateResponse("place_order.html", {
         "request": request, 
@@ -137,11 +137,11 @@ async def place_order_submit(
     
     if supplier:
         # Update Supplier Stats
-        supplier.last_order_qty = quantity
-        supplier.last_order_received = False
-        supplier.last_order_date = date.today()
-        supplier.total_due = (getattr(supplier, "total_due", 0.0) or 0.0) + total_cost
-        supplier.payment_status = False
+        supplier.last_order_qty = quantity # type: ignore
+        supplier.last_order_received = False # type: ignore
+        supplier.last_order_date = date.today()# type: ignore
+        supplier.total_due = (getattr(supplier, "total_due", 0.0) or 0.0) + total_cost# type: ignore
+        supplier.payment_status = False# type: ignore
 
         # Create History Record
         new_order = Order(
@@ -150,20 +150,50 @@ async def place_order_submit(
             quantity=quantity,
             total_cost=total_cost,
             order_date=date.today(),
-            status="Pending"
+            status=False,
+            payment_status=False
         )
         db.add(new_order)
         
-        # Update Supplier Product List String
-        current_products = getattr(supplier, "products", "")
-        if current_products and isinstance(current_products, str):
+        current_products = str(supplier.products) 
+        
+        if current_products:
             # Check if product already exists in the comma-separated list
             product_list = [p.strip() for p in current_products.split(",")]
             if product_name not in product_list:
-                supplier.products = current_products + f", {product_name}"
+                new_products = current_products + f", {product_name}"
+                setattr(supplier, "products", new_products)
         else:
-            supplier.products = product_name
+            setattr(supplier, "products", product_name)
 
         db.commit()
     
+    return RedirectResponse(url="/orders", status_code=303)
+
+
+
+@app.post("/orders/{order_id}/update")
+async def update_order_status(
+    order_id: int, 
+    action: str = Form(...), # Takes 'receive' or 'pay'
+    db: Session = Depends(get_db)
+):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    
+    if not order:
+        return RedirectResponse(url="/orders", status_code=303)
+
+    # Logic to handle Status (Received)
+    if action == "receive":
+        order.status = True# type: ignore
+        if order.supplier:
+             order.supplier.last_order_received = True
+
+    # Logic to handle Payment (Paid)
+    elif action == "pay":
+        order.payment_status = True# type: ignore
+        if order.payment_status:# type: ignore
+            order.supplier.total_due -= order.total_cost
+
+    db.commit()
     return RedirectResponse(url="/orders", status_code=303)
