@@ -12,7 +12,7 @@
         #sidebar { min-width: 250px; max-width: 250px; background: #343a40; color: #fff; transition: all 0.3s; }
         #sidebar .nav-link { color: rgba(255,255,255,.8); }
         #sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.1); }
-        #sidebar .nav-link.active { background: #0d6efd; color: white; }
+        #sidebar .nav-link.active { background:#0d6efd; color: white; }
         main { width: 100%; padding: 20px; background-color: #f8f9fa; }
     </style>
 </head>
@@ -26,19 +26,16 @@
 
         <ul class="list-unstyled components pt-3">
             <li class="mb-2">
-                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/" class="nav-link"><i class="fa-solid fa-chart-line me-2"></i> Dashboard</a>
             </li>
             <li class="mb-2">
-                <a href="/products" class="nav-link"> Products</a>
+                <a href="/products" class="nav-link"><i class="fa-solid fa-shirt me-2"></i> Products</a>
             </li>
             <li class="mb-2">
-                <a href="/stock-movements" class="nav-link">Stock Control</a>
+                <a href="/orders" class="nav-link"><i class="fa-solid fa-cart-shopping me-2"></i> Orders</a>
             </li>
             <li class="mb-2">
-                <a href="/orders" class="nav-link">Orders</a>
-            </li>
-            <li class="mb-2">
-                <a href="/suppliers" class="nav-link">Suppliers</a>
+                <a href="/suppliers" class="nav-link"><i class="fa-solid fa-truck me-2"></i> Suppliers</a>
             </li>
         </ul>
     </nav>
