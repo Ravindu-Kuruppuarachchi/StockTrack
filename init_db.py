@@ -1,6 +1,5 @@
-from database import engine, Base, SessionLocal, User
-
-# Note: We removed the 'passlib' imports
+from database import engine, Base, SessionLocal
+from models import User
 
 Base.metadata.create_all(bind=engine)
 db = SessionLocal()
@@ -13,8 +12,8 @@ if not existing_user:
     
     db.add(admin_user)
     db.commit()
-    print("✅ Admin user created (Plain Text)!")
+    print("Admin user created (Plain Text)!")
 else:
-    print("⚠️ Admin user already exists.")
+    print("Admin user already exists.")
 
 db.close()

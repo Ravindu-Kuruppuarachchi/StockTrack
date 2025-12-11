@@ -1,5 +1,5 @@
-from database import SessionLocal, Product, ProductVariant, Supplier, engine, Base
-
+from database import SessionLocal, engine, Base
+from models import Supplier, Product, ProductVariant
 # Ensure tables exist
 Base.metadata.create_all(bind=engine)
 db = SessionLocal()

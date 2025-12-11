@@ -1,5 +1,6 @@
-from database import SessionLocal, Supplier, engine, Base
+from database import SessionLocal, engine, Base
 from datetime import date
+from models import Supplier
 
 # Ensure table exists
 Base.metadata.create_all(bind=engine)
