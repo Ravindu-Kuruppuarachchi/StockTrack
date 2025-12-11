@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Sales History - Inventory{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Sales History</h2>
+        <p class="text-muted">Track all products sold to customers.</p>
+    </div>
+    <a href="/sales/new" class="btn btn-success">
+        <i class="bi bi-plus-lg"></i> Record New Sale
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Sale ID</th>
+                        <th>Product Name</th>
+                        <th>Quantity Sold</th>
+                        <th>Total Amount ($)</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td class="fw-bold">#{{ sale.id }}</td>
+                        <td>{{ sale.product_name }}</td>
+                        <td>{{ sale.quantity }}</td>
+                        <td class="fw-bold text-success">${{ sale.total_amount }}</td>
+                        <td>{{ sale.sale_date }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            No sales recorded yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,7 +6,7 @@ from fastapi import Depends
 from passlib.context import CryptContext
 from datetime import date 
 
-from models import User, Supplier, Product, Order
+from models import User, Supplier, Product, Order, Sale
 from database import get_db
 
 
@@ -140,3 +140,20 @@ def delete_supplier(db: Session, supplier: Supplier):
     db.delete(supplier)
     db.commit() 
     return None
+
+def get_all_sales(db: Session):
+    return db.query(Sale).order_by(Sale.id.desc()).all()
+
+def create_sale(db: Session, product_name: str, quantity: int, total_amount: float):
+    new_sale = Sale(
+        product_name=product_name,
+        quantity=quantity,
+        total_amount=total_amount,
+        sale_date=date.today()
+    )
+    db.add(new_sale)
+    db.commit()
+    db.refresh(new_sale)
+
+    
+    return new_sale

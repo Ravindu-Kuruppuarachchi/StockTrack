@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from database import get_db
-import curd
+import crud
 
 app = FastAPI(title="Inventory Management System")
 
@@ -26,7 +26,7 @@ async def login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = curd.get_user_by_email(db, email)
+    user = crud.get_user_by_email(db, email)
 
     if not user or password != user.password:
         return templates.TemplateResponse("login.html", {
@@ -55,19 +55,19 @@ async def update_login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = curd.get_user_by_email(db, email)
+    user = crud.get_user_by_email(db, email)
     
     if action == "delete":
         if user:
-            curd.delete_user(db, user)
+            crud.delete_user(db, user)
         return RedirectResponse(url="/login", status_code=303)
     
     if action == "update":
         if user:
-            curd.update_user_password(db, user, password)
+            crud.update_user_password(db, user, password)
             return RedirectResponse(url="/products", status_code=303)
         else:
-            curd.create_user(db, email, password)
+            crud.create_user(db, email, password)
             return RedirectResponse(url="/products", status_code=303)
     
     return RedirectResponse(url="/products", status_code=303)
@@ -76,7 +76,7 @@ async def update_login_submit(
 
 @app.get("/suppliers", response_class=HTMLResponse)
 async def read_suppliers(request: Request, db: Session = Depends(get_db)):
-    suppliers_db = curd.get_all_suppliers(db)
+    suppliers_db = crud.get_all_suppliers(db)
     
     suppliers_list = []
     for s in suppliers_db:
@@ -97,10 +97,9 @@ async def read_suppliers(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("suppliers.html", {"request": request, "suppliers": suppliers_list})
 
 # PRODUCTS ROUTES
-
 @app.get("/products", response_class=HTMLResponse)
 async def product_list(request: Request, db: Session = Depends(get_db)):
-    products_db = curd.get_all_products(db)
+    products_db = crud.get_all_products(db)
     
     products_formatted = []
     for p in products_db:
@@ -110,18 +109,16 @@ async def product_list(request: Request, db: Session = Depends(get_db)):
             "description": p.description,
             "category": p.category,
             "supplier": p.supplier.name if p.supplier else "Unknown",
-            "variants": [
-                {
-                    "sku": v.sku, 
-                    "attributes": v.attributes, 
-                    "price": v.price, 
-                    "stock": v.stock_quantity
-                } 
-                for v in p.variants
-            ]
+            "stock": p.stocks,
+            
+            # Update these lines to match models.py
+            "selling_price": p.selling_price, 
+            "buying_price": p.buying_price
         })
 
     return templates.TemplateResponse("products_list.html", {"request": request, "products": products_formatted})
+
+
 
 @app.get("/products/create", response_class=HTMLResponse)
 async def product_create(request: Request):
@@ -131,13 +128,13 @@ async def product_create(request: Request):
 @app.get("/orders", response_class=HTMLResponse)
 async def orders_page(request: Request, db: Session = Depends(get_db)):
     # Fetch orders, newest first
-    orders_data = curd.get_all_orders(db)
+    orders_data = crud.get_all_orders(db)
     return templates.TemplateResponse("orders.html", {"request": request, "orders": orders_data})
 
 # 2. PLACE ORDER FORM PAGE
 @app.get("/orders/new", response_class=HTMLResponse)
 async def place_order_form(request: Request, supplier_id: int, db: Session = Depends(get_db)):
-    suppliers_db = curd.get_all_suppliers(db)
+    suppliers_db = crud.get_all_suppliers(db)
     return templates.TemplateResponse("place_order.html", {
         "request": request, 
         "suppliers": suppliers_db,
@@ -153,10 +150,10 @@ async def place_order_submit(
     total_cost: float = Form(0.0),
     db: Session = Depends(get_db)
 ):
-    supplier = curd.get_supplier_by_id(db, supplier_id)
+    supplier = crud.get_supplier_by_id(db, supplier_id)
 
     if supplier:
-        curd.create_order(db, supplier_id, product_name, quantity, total_cost)
+        crud.create_order(db, supplier_id, product_name, quantity, total_cost)
     
     return RedirectResponse(url="/orders", status_code=303)
 
@@ -167,11 +164,11 @@ async def update_order_status(
     action: str = Form(...), # Takes 'receive' or 'pay'
     db: Session = Depends(get_db)
 ):
-    order = curd.get_order_by_id(db, order_id)
+    order = crud.get_order_by_id(db, order_id)
     if not order:
         return RedirectResponse(url="/orders", status_code=303)
 
-    curd.update_order_state(db, order_id, action)
+    crud.update_order_state(db, order_id, action)
     return RedirectResponse(url="/orders", status_code=303)
 
 @app.get("/supplier/newsupplier", response_class=HTMLResponse)
@@ -184,7 +181,7 @@ async def edit_supplier_form(
     supplier_id: int, 
     db: Session = Depends(get_db)):
 
-    supplier = curd.get_supplier_by_id(db, supplier_id)
+    supplier = crud.get_supplier_by_id(db, supplier_id)
     return templates.TemplateResponse("update_supplier.html", {
         "request": request, 
         "supplier": supplier
@@ -201,12 +198,12 @@ async def edit_supplier_submit(
     db: Session = Depends(get_db)
 ):
     if action == "update":
-        curd.update_supplier_details(db, supplier_id, supplier_name, contact_number, items, total_due)
+        crud.update_supplier_details(db, supplier_id, supplier_name, contact_number, items, total_due)
         return RedirectResponse(url="/suppliers", status_code=303)
     
     if action == "delete":
-        supplier = curd.get_supplier_by_id(db, supplier_id)
-        curd.delete_supplier(db, supplier)
+        supplier = crud.get_supplier_by_id(db, supplier_id)
+        crud.delete_supplier(db, supplier)
         return RedirectResponse(url="/suppliers", status_code=303)
 
 
@@ -216,5 +213,26 @@ async def add_supplier_submit(
     contact_number: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    curd.create_supplier(db,supplier_name=supplier_name, contact_number=contact_number)
+    crud.create_supplier(db,supplier_name=supplier_name, contact_number=contact_number)
     return RedirectResponse(url="/suppliers", status_code=303)
+
+
+@app.get("/sales", response_class=HTMLResponse)
+async def sales_list(request: Request, db: Session = Depends(get_db)):
+    sales_data = crud.get_all_sales(db)
+    return templates.TemplateResponse("sales.html", {"request": request, "sales": sales_data})
+
+@app.get("/sales/new", response_class=HTMLResponse)
+async def new_sale_form(request: Request, db: Session = Depends(get_db)):
+    products = crud.get_all_products(db)
+    return templates.TemplateResponse("add_sale.html", {"request": request, "products": products})
+
+@app.post("/sales/add")
+async def add_sale_submit(
+    product_name: str = Form(...),
+    quantity: int = Form(...),
+    total_amount: float = Form(...),
+    db: Session = Depends(get_db)
+):
+    crud.create_sale(db, product_name, quantity, total_amount)
+    return RedirectResponse(url="/sales", status_code=303)

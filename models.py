@@ -17,6 +17,8 @@ class Supplier(Base):
     last_order_received = Column(Boolean, default=False)
     last_order_date = Column(Date, nullable=True)
 
+    supplied_items = relationship("Product", back_populates="supplier")
+
 
 class User(Base):
     __tablename__ = "users"
@@ -30,25 +32,16 @@ class Product(Base):
     __tablename__ = "products"
     
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+    name = Column(String)
     description = Column(String)
     category = Column(String)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"))
-    
-    # Relationships
-    supplier = relationship("Supplier", backref="products_list")
-    variants = relationship("ProductVariant", backref="product")
+    stocks = Column(Integer)
+    selling_price = Column("Selling_price_unit", Float) 
+    buying_price  = Column("Buying_price", Float)
+    supplier = relationship("supplier", back_populates="products")
 
-
-class ProductVariant(Base):
-    __tablename__ = "product_variants"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"))
-    sku = Column(String, unique=True, index=True)
-    attributes = Column(String)
-    price = Column(Float)
-    stock_quantity = Column(Integer)
+    supplier = relationship("Supplier", back_populates="supplied_items")
 
 
 class Order(Base):
@@ -67,3 +60,11 @@ class Order(Base):
     supplier = relationship("Supplier", backref="all_orders")
 
 
+class Sale(Base):
+    __tablename__ = "sales"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_name = Column(String)
+    quantity = Column(Integer)
+    total_amount = Column(Float)
+    sale_date = Column(Date)
