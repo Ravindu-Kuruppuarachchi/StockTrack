@@ -193,14 +193,21 @@ async def edit_supplier_form(
 @app.post("/suppliers/{supplier_id}/update", response_class=HTMLResponse)
 async def edit_supplier_submit(
     supplier_id: int,
+    action: str = Form(...),
     supplier_name: str = Form(...),
     contact_number: str = Form(...),
     items: str = Form(""),
     total_due: float = Form(0.0),
     db: Session = Depends(get_db)
 ):
-    curd.update_supplier_details(db, supplier_id, supplier_name, contact_number, items, total_due)
-    return RedirectResponse(url="/suppliers", status_code=303)
+    if action == "update":
+        curd.update_supplier_details(db, supplier_id, supplier_name, contact_number, items, total_due)
+        return RedirectResponse(url="/suppliers", status_code=303)
+    
+    if action == "delete":
+        supplier = curd.get_supplier_by_id(db, supplier_id)
+        curd.delete_supplier(db, supplier)
+        return RedirectResponse(url="/suppliers", status_code=303)
 
 
 @app.post("/suppliers/place")

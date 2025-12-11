@@ -8,7 +8,8 @@
         
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>Edit Supplier Details</h3>
-            <a href="/suppliers" class="btn btn-outline-secondary">Back to Suppliers</a>
+            <button type="button" class="btn btn-light border me-2" onclick="window.history.back()">Back to Suppliers</button>
+            
         </div>
 
         <div class="card border-0 shadow-sm">
@@ -39,11 +40,12 @@
                         <label for="total_due" class="form-label fw-bold">Total Due ($)</label>
                         <input type="number" step="0.01" class="form-control" name="total_due" id="total_due" 
                                value="{{ supplier.total_due }}" required>
+                               
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="/suppliers" class="btn btn-light border me-2">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger me-2">Delete Supplier</button>
+                        <button type="submit" name="action" value= "update" class="btn btn-primary px-4">Save Changes</button>
                     </div>
                 </form>
             </div>
@@ -51,4 +53,4 @@
 
     </div>
 </div>
-{% endblock %}
+{% endblock %} 

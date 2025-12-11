@@ -136,3 +136,7 @@ def update_order_state(db: Session, order_id: int, action: str):
     return order
 
 
+def delete_supplier(db: Session, supplier: Supplier):
+    db.delete(supplier)
+    db.commit() 
+    return None
