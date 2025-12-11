@@ -222,6 +222,8 @@ async def update_order_status(
         order.payment_status = True# type: ignore
         if order.payment_status:# type: ignore
             order.supplier.total_due -= order.total_cost
+            if order.supplier.total_due <= 0:
+                order.supplier.payment_status = True
 
     db.commit()
     return RedirectResponse(url="/orders", status_code=303)
@@ -242,10 +244,10 @@ async def add_supplier_submit(
         name=supplier_name,
         contact=contact_number,
         products="", 
-        payment_status=False,
+        payment_status=True,
         total_due=0.0,
         last_order_qty=0,
-        last_order_received=False,
+        last_order_received=True,
         last_order_date=None
     )
     
