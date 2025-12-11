@@ -232,6 +232,44 @@ async def update_order_status(
 async def add_suppier(request: Request):
     return templates.TemplateResponse("add_supplier.html", {"request": request})
 
+@app.get("/suppliers/{supplier_id}/update", response_class=HTMLResponse)
+async def edit_supplier_form(
+    request: Request,
+    supplier_id: int, 
+    db: Session = Depends(get_db)):
+
+    suppliers_db = db.query(Supplier).all()
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+    return templates.TemplateResponse("update_supplier.html", {
+        "request": request, 
+        "supplier": supplier
+    })
+
+@app.post("/suppliers/{supplier_id}/update", response_class=HTMLResponse)
+async def edit_supplier_submit(
+    supplier_id: int,
+    supplier_name: str = Form(...),
+    contact_number: str = Form(...),
+    items: str = Form(""),
+    total_due: float = Form(0.0),
+    db: Session = Depends(get_db)
+):
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+    
+    if supplier:
+        # Update Supplier Stats
+        supplier.name = supplier_name # type: ignore
+        supplier.contact = contact_number # type: ignore
+        supplier.products = items# type: ignore
+        supplier.total_due = total_due# type: ignore
+        if total_due <= 0:
+            supplier.payment_status = True  # type: ignore
+        else:
+            supplier.payment_status = False  # type: ignore
+        
+        db.commit()
+    
+    return RedirectResponse(url="/suppliers", status_code=303)
 
 
 @app.post("/suppliers/place")

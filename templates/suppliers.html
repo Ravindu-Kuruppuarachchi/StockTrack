@@ -79,7 +79,9 @@
                                     <a href="/orders/new?supplier_id={{ supplier.id }}" class="btn btn-sm btn-primary">
                                         Place Order
                                     </a>
-                                    <button class="btn btn-sm btn-light border ms-1">Edit</button>
+                                    <a href="/suppliers/{{ supplier.id }}/update" class="btn btn-sm btn-outline-secondary ms-2">
+                                        Edit
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
