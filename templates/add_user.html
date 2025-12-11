@@ -1,38 +1,32 @@
 {% extends "base.html" %}
-
 {% block title %}Update users - Inventory{% endblock %}
-
 {% block content %}
+
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>Update User Details</h3>
             <button type="button" class="btn btn-light border me-2" onclick="window.history.back()">Cancel</button>
         </div>
-
-
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
-                <form form action="/login/edit" method="post">
-                    
+                <form action="/login/update" method="post">
                     <div class="mb-3">
-                        <label for="user_id" class="form-label fw-bold">User Name</label>
-                        <input type="text" class="form-control" name="user_name" id="user_name" placeholder="e.g. User Name" required>
+                        <label for="email" class="form-label fw-bold">Email Address</label>
+                        <input type="email" class="form-control" name="email" id="email" placeholder="Enter Email" required>
                     </div>
-
                     <div class="mb-3">
                         <label for="password" class="form-label fw-bold">Password</label>
-                        <input type="text" class="form-control" name=password" id="password" placeholder="Add Password" required>
+                        <input type="password" class="form-control" name="password" id="password" placeholder="Enter Password" required>
                     </div>
-
+                    <hr>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="submit" class="btn btn-light border me-2">Delete User</button>
-                        <button type="submit" class="btn btn-primary px-4">Update</button>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger me-2">Delete User</button>
+                        <button type="submit" name="action" value="update" class="btn btn-primary px-4">Update / Add User</button>
                     </div>
                 </form>
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}

@@ -48,6 +48,36 @@ async def logout():
 @app.get("/login/update", response_class=HTMLResponse)
 async def update_login(request: Request):
     return templates.TemplateResponse("add_user.html", {"request": request})
+
+
+@app.post("/login/update")
+async def update_login_submit( 
+    action: str = Form(...),
+    email: str = Form(...), 
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.email == email).first()
+    
+    if action == "delete":
+        if user:
+            db.delete(user)
+            db.commit()
+        return RedirectResponse(url="/login", status_code=303)
+    
+    if action == "update":
+        if user:
+            user.password = password  # type: ignore
+            db.commit()
+            return RedirectResponse(url="/products", status_code=303)
+        else:
+            new_user = User(email=email, password=password)
+            db.add(new_user)
+            db.commit()
+            return RedirectResponse(url="/products", status_code=303)
+    
+    return RedirectResponse(url="/products", status_code=303)
+
 # --- SUPPLIERS ROUTES ---
 
 @app.get("/suppliers", response_class=HTMLResponse)
