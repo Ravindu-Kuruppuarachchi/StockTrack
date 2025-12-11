@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Add new suppliers - Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Add New Supplier</h3>
+            <a href="/suppliers" class="btn btn-outline-secondary">Back to Suppliers</a>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form action="/suppliers/place" method="post">
+                    
+                    <div class="mb-3">
+                        <label for="supplier_id" class="form-label fw-bold">Supplier Name</label>
+                        <input type="text" class="form-control" name="supplier_name" id="supplier_name" placeholder="e.g. ABC Supplies" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="product_name" class="form-label fw-bold">Condatct Number</label>
+                        <input type="text" class="form-control" name="contact_number" id="contact_number" placeholder="e.g. +94-567-8901" required>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-light border me-2" onclick="window.history.back()">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4">Confirm Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

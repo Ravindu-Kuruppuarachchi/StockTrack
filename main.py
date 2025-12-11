@@ -45,10 +45,9 @@ async def logout():
     response.delete_cookie("user_session")
     return response
 
-# @app.get("/dashboard", response_class=HTMLResponse)
-# async def dashboard(request: Request):
-#     return templates.TemplateResponse("dashboard.html", {"request": request})
-
+@app.get("/login/update", response_class=HTMLResponse)
+async def update_login(request: Request):
+    return templates.TemplateResponse("add_user.html", {"request": request})
 # --- SUPPLIERS ROUTES ---
 
 @app.get("/suppliers", response_class=HTMLResponse)
@@ -107,7 +106,7 @@ async def product_create(request: Request):
 
 # --- ORDER ROUTES ---
 
-# --- 1. VIEW ALL ORDERS ROUTE ---
+
 @app.get("/orders", response_class=HTMLResponse)
 async def orders_page(request: Request, db: Session = Depends(get_db)):
     # Fetch orders, newest first
@@ -171,7 +170,6 @@ async def place_order_submit(
     return RedirectResponse(url="/orders", status_code=303)
 
 
-
 @app.post("/orders/{order_id}/update")
 async def update_order_status(
     order_id: int, 
@@ -197,3 +195,32 @@ async def update_order_status(
 
     db.commit()
     return RedirectResponse(url="/orders", status_code=303)
+
+@app.get("/supplier/newsupplier", response_class=HTMLResponse)
+async def add_suppier(request: Request):
+    return templates.TemplateResponse("add_supplier.html", {"request": request})
+
+
+
+@app.post("/suppliers/place")
+async def add_supplier_submit(
+    supplier_name: str = Form(...),
+    contact_number: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    new_supplier = Supplier(
+        name=supplier_name,
+        contact=contact_number,
+        products="", 
+        payment_status=False,
+        total_due=0.0,
+        last_order_qty=0,
+        last_order_received=False,
+        last_order_date=None
+    )
+    
+    db.add(new_supplier)
+    db.commit()
+    
+    # Redirect back to the suppliers list
+    return RedirectResponse(url="/suppliers", status_code=303)
