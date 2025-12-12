@@ -119,8 +119,33 @@ async def product_list(request: Request, db: Session = Depends(get_db)):
 
 
 @app.get("/products/create", response_class=HTMLResponse)
-async def product_create(request: Request):
-    return templates.TemplateResponse("product_create.html", {"request": request})
+async def product_create(request: Request, db: Session = Depends(get_db)):
+
+    suppliers_list = crud.get_all_suppliers(db)
+
+    return templates.TemplateResponse("product_create.html", {
+        "request": request, 
+        "suppliers": suppliers_list}
+    )
+
+@app.post("/products/create") 
+async def product_create_submit(
+    product_name: str = Form(...),
+    category: str = Form(...),
+    description: str = Form(...),
+    supplier_id: int = Form(...),
+    db: Session = Depends(get_db)
+
+):
+    crud.create_product(
+        db, 
+        name=product_name,
+        description=description,
+        category=category,
+        supplier_id= supplier_id #type: ignore
+    )
+
+    return RedirectResponse(url="/products", status_code=303)
 
 # ORDER ROUTES
 @app.get("/orders", response_class=HTMLResponse)

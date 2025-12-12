@@ -60,6 +60,12 @@ def create_supplier(db: Session, supplier_name: str, contact_number: str):
 def get_product_by_name(db: Session, product_name: str):
     return db.query(Product).filter(Product.name == product_name).first()
 
+def get_supplier_by_name(db: Session, supplier_name: str):
+    supplier = db.query(Supplier).filter(Supplier.name == supplier_name).first()
+    if supplier:
+        return supplier.id
+    return None
+
 
 def update_supplier_details(db: Session, supplier_id: int, supplier_name: str, contact_number: str, items: str, total_due: float):
     supplier = get_supplier_by_id(db, supplier_id)
@@ -73,8 +79,6 @@ def update_supplier_details(db: Session, supplier_id: int, supplier_name: str, c
             supplier.payment_status = True  # type: ignore
         else:
             supplier.payment_status = False  # type: ignore
-        
-
         db.commit()
 
 
@@ -179,6 +183,35 @@ def create_sale(db: Session, product_name: str, quantity: int, total_amount: flo
     product = get_product_by_name(db, product_name)
     product.stocks -= quantity  # type: ignore
     db.commit() 
-
-    
     return new_sale
+
+def create_product(db: Session, name: str, description: str, category: str, supplier_id: int):
+    new_product = Product(
+        name=name,
+        description=description,
+        category=category,
+        stocks=0,
+        selling_price=0.0,
+        buying_price=0.0,
+        supplier_id=supplier_id
+    )
+    db.add(new_product)
+    db.commit()
+
+    supplier = get_supplier_by_id(db, supplier_id)
+    if supplier:
+        current_products = str(supplier.products)
+        
+        if current_products:
+            # Check if product already exists to avoid duplicates
+            product_list = [p.strip() for p in current_products.split(",")]
+            if name not in product_list:
+                new_products = current_products + f", {name}"
+                setattr(supplier, "products", new_products)
+        else:
+            setattr(supplier, "products", name)
+
+        db.commit()
+
+
+    return new_product
