@@ -57,6 +57,10 @@ def create_supplier(db: Session, supplier_name: str, contact_number: str):
     db.add(new_supplier)
     db.commit()
 
+def get_product_by_name(db: Session, product_name: str):
+    return db.query(Product).filter(Product.name == product_name).first()
+
+
 def update_supplier_details(db: Session, supplier_id: int, supplier_name: str, contact_number: str, items: str, total_due: float):
     supplier = get_supplier_by_id(db, supplier_id)
     if supplier:
@@ -124,6 +128,23 @@ def update_order_state(db: Session, order_id: int, action: str):
         if order.supplier:
              order.supplier.last_order_received = True
 
+        unit_price = order.total_cost / order.quantity
+        existing_product = get_product_by_name(db, order.product_names) # type: ignore
+        if existing_product:
+            existing_product.stocks += order.quantity  # type: ignore
+            existing_product.buying_price = unit_price  # type: ignore
+        else:
+            new_product = Product(
+                name=order.product_names,
+                description="",
+                category="Uncategorized",
+                stocks=order.quantity,
+                selling_price=unit_price * 1.2,  # Assuming a 20% markup
+                buying_price=unit_price,
+                supplier_id=order.supplier_id
+            )
+            db.add(new_product)
+
     # Logic to handle Payment (Paid)
     elif action == "pay":
         order.payment_status = True# type: ignore
@@ -154,6 +175,10 @@ def create_sale(db: Session, product_name: str, quantity: int, total_amount: flo
     db.add(new_sale)
     db.commit()
     db.refresh(new_sale)
+
+    product = get_product_by_name(db, product_name)
+    product.stocks -= quantity  # type: ignore
+    db.commit() 
 
     
     return new_sale

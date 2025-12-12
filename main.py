@@ -73,7 +73,6 @@ async def update_login_submit(
     return RedirectResponse(url="/products", status_code=303)
 
 # SUPPLIERS ROUTES
-
 @app.get("/suppliers", response_class=HTMLResponse)
 async def read_suppliers(request: Request, db: Session = Depends(get_db)):
     suppliers_db = crud.get_all_suppliers(db)
@@ -111,7 +110,6 @@ async def product_list(request: Request, db: Session = Depends(get_db)):
             "supplier": p.supplier.name if p.supplier else "Unknown",
             "stock": p.stocks,
             
-            # Update these lines to match models.py
             "selling_price": p.selling_price, 
             "buying_price": p.buying_price
         })
