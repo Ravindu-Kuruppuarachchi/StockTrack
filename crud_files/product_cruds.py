@@ -69,7 +69,6 @@ def create_product(db: Session, name: str, description: str, category: str, supp
                 setattr(supplier, "products", new_products)
         else:
             setattr(supplier, "products", name)
-
         db.commit()
 
 
