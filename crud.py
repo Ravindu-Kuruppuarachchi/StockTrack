@@ -216,7 +216,7 @@ def create_product(db: Session, name: str, description: str, category: str, supp
 
     return new_product
 
-def update_product_details(db: Session, product_id: int, name: str, description: str, category: str, stocks: int, selling_price: float, buying_price: float):
+def update_product_details(db: Session, product_id: int, name: str, category: str, description: str, stocks: int, selling_price: float, buying_price: float):
     product = get_product_by_id(db, product_id)
     if product:
         product.name = name  # type: ignore
