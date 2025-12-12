@@ -13,25 +13,36 @@
     </a>
 </div>
 
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
+<div class="card-body">
+    <form action="/products" method="get">
         <div class="row g-3">
             <div class="col-md-4">
-                <input type="text" class="form-control" placeholder="Search products...">
+                <input type="text" 
+                       class="form-control" 
+                       name="search" 
+                       placeholder="Search products..." 
+                       value="{{ search_query if search_query else '' }}">
             </div>
             <div class="col-md-3">
-                <select class="form-select">
-                    <option selected>All Categories</option>
-                    <option value="Clothing">Clothing</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Furniture">Furniture</option>
+                <select class="form-select" name="category">
+                    <option value="All Categories"{% if not selected_category or selected_category=='All Categories'%}selected{% endif%}>All Categories</option>
+                    
+                    <option value="Clothing" {%if selected_category=='Clothing' %}selected{% endif %}>Clothing</option>
+                    <option value="Electronics" {%if selected_category== 'Electronics'%}selected{% endif %}>Electronics</option>
+                    <option value="Furniture"{%if selected_category =='Furniture'%}selected{% endif %}>Furniture</option>
                 </select>
             </div>
+
+            
             <div class="col-md-2">
-                <button class="btn btn-outline-secondary w-100">Filter</button>
+                <button type="submit"class="btn btn-outline-secondary w-100">Filter</button>
+            </div>
+            
+            <div class="col-md-2">
+                <a href="/products"class="btn btn-light w-100">Clear</a>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <div class="card border-0 shadow-sm">

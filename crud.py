@@ -1,14 +1,7 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from fastapi import Depends
-from passlib.context import CryptContext
 from datetime import date 
-
 from models import User, Supplier, Product, Order, Sale
-from database import get_db
-
+from typing import Optional
 
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
@@ -234,3 +227,13 @@ def delete_product(db: Session, product: Product):
 
 
 
+def get_products_filtered(db: Session, search: Optional[str] = None, category: Optional[str] = None):
+    # Start the query
+    query = db.query(Product)
+    if search:
+        query = query.filter(Product.name.ilike(f"%{search}%"))
+    
+    if category and category != "All Categories":
+        query = query.filter(Product.category == category)
+        
+    return query.all()

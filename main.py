@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from database import get_db
 import crud
+from typing import Optional
 
 app = FastAPI(title="Inventory Management System")
 
@@ -94,27 +95,6 @@ async def read_suppliers(request: Request, db: Session = Depends(get_db)):
         })
 
     return templates.TemplateResponse("suppliers.html", {"request": request, "suppliers": suppliers_list})
-
-# PRODUCTS ROUTES
-@app.get("/products", response_class=HTMLResponse)
-async def product_list(request: Request, db: Session = Depends(get_db)):
-    products_db = crud.get_all_products(db)
-    
-    products_formatted = []
-    for p in products_db:
-        products_formatted.append({
-            "id": p.id,
-            "name": p.name,
-            "description": p.description,
-            "category": p.category,
-            "supplier": p.supplier.name if p.supplier else "Unknown",
-            "stock": p.stocks,
-            
-            "selling_price": p.selling_price, 
-            "buying_price": p.buying_price
-        })
-
-    return templates.TemplateResponse("products_list.html", {"request": request, "products": products_formatted})
 
 
 
@@ -307,3 +287,34 @@ async def edit_product_submit(
         crud.delete_product(db, product)
         return RedirectResponse(url="/products", status_code=303)
     return RedirectResponse(url="/products", status_code=303)
+
+
+@app.get("/products", response_class=HTMLResponse)
+async def product_list(
+    request: Request, 
+    search: Optional[str] = None, 
+    category: Optional[str] = None, 
+    db: Session = Depends(get_db)
+):
+    # Call the filtered function
+    products_db = crud.get_products_filtered(db, search, category)
+    
+    products_formatted = []
+    for p in products_db:
+        products_formatted.append({
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "category": p.category,
+            "supplier": p.supplier.name if p.supplier else "Unknown",
+            "stock": p.stocks,
+            "selling_price": p.selling_price, 
+            "buying_price": p.buying_price
+        })
+
+    return templates.TemplateResponse("products_list.html", {
+        "request": request, 
+        "products": products_formatted,
+        "search_query": search,   # Send back to HTML
+        "selected_category": category # Send back to HTML
+    })
