@@ -4,11 +4,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from database import get_db
-import crud
+from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
 from typing import Optional
 
 app = FastAPI(title="Inventory Management System")
-
 
 templates = Jinja2Templates(directory="templates")
 
@@ -27,7 +26,7 @@ async def login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = crud.get_user_by_email(db, email)
+    user = login_cruds.get_user_by_email(db, email)
 
     if not user or password != user.password:
         return templates.TemplateResponse("login.html", {
@@ -56,19 +55,19 @@ async def update_login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = crud.get_user_by_email(db, email)
+    user = login_cruds.get_user_by_email(db, email)
     
     if action == "delete":
         if user:
-            crud.delete_user(db, user)
+            login_cruds.delete_user(db, user)
         return RedirectResponse(url="/login", status_code=303)
     
     if action == "update":
         if user:
-            crud.update_user_password(db, user, password)
+            login_cruds.update_user_password(db, user, password)
             return RedirectResponse(url="/products", status_code=303)
         else:
-            crud.create_user(db, email, password)
+            login_cruds.create_user(db, email, password)
             return RedirectResponse(url="/products", status_code=303)
     
     return RedirectResponse(url="/products", status_code=303)
@@ -76,7 +75,7 @@ async def update_login_submit(
 # SUPPLIERS ROUTES
 @app.get("/suppliers", response_class=HTMLResponse)
 async def read_suppliers(request: Request, db: Session = Depends(get_db)):
-    suppliers_db = crud.get_all_suppliers(db)
+    suppliers_db = supplier_cruds.get_all_suppliers(db)
     
     suppliers_list = []
     for s in suppliers_db:
@@ -101,7 +100,7 @@ async def read_suppliers(request: Request, db: Session = Depends(get_db)):
 @app.get("/products/create", response_class=HTMLResponse)
 async def product_create(request: Request, db: Session = Depends(get_db)):
 
-    suppliers_list = crud.get_all_suppliers(db)
+    suppliers_list = supplier_cruds.get_all_suppliers(db)
 
     return templates.TemplateResponse("product_create.html", {
         "request": request, 
@@ -117,7 +116,7 @@ async def product_create_submit(
     db: Session = Depends(get_db)
 
 ):
-    crud.create_product(
+    product_cruds.create_product(
         db, 
         name=product_name,
         description=description,
@@ -131,13 +130,13 @@ async def product_create_submit(
 @app.get("/orders", response_class=HTMLResponse)
 async def orders_page(request: Request, db: Session = Depends(get_db)):
     # Fetch orders, newest first
-    orders_data = crud.get_all_orders(db)
+    orders_data = order_cruds.get_all_orders(db)
     return templates.TemplateResponse("orders.html", {"request": request, "orders": orders_data})
 
 # 2. PLACE ORDER FORM PAGE
 @app.get("/orders/new", response_class=HTMLResponse)
 async def place_order_form(request: Request, supplier_id: int, db: Session = Depends(get_db)):
-    suppliers_db = crud.get_all_suppliers(db)
+    suppliers_db = supplier_cruds.get_all_suppliers(db)
     return templates.TemplateResponse("place_order.html", {
         "request": request, 
         "suppliers": suppliers_db,
@@ -153,10 +152,10 @@ async def place_order_submit(
     total_cost: float = Form(0.0),
     db: Session = Depends(get_db)
 ):
-    supplier = crud.get_supplier_by_id(db, supplier_id)
+    supplier = supplier_cruds.get_supplier_by_id(db, supplier_id)
 
     if supplier:
-        crud.create_order(db, supplier_id, product_name, quantity, total_cost)
+        order_cruds.create_order(db, supplier_id, product_name, quantity, total_cost)
     
     return RedirectResponse(url="/orders", status_code=303)
 
@@ -167,11 +166,11 @@ async def update_order_status(
     action: str = Form(...), # Takes 'receive' or 'pay'
     db: Session = Depends(get_db)
 ):
-    order = crud.get_order_by_id(db, order_id)
+    order = order_cruds.get_order_by_id(db, order_id)
     if not order:
         return RedirectResponse(url="/orders", status_code=303)
 
-    crud.update_order_state(db, order_id, action)
+    order_cruds.update_order_state(db, order_id, action)
     return RedirectResponse(url="/orders", status_code=303)
 
 @app.get("/supplier/newsupplier", response_class=HTMLResponse)
@@ -184,7 +183,7 @@ async def edit_supplier_form(
     supplier_id: int, 
     db: Session = Depends(get_db)):
 
-    supplier = crud.get_supplier_by_id(db, supplier_id)
+    supplier = supplier_cruds.get_supplier_by_id(db, supplier_id)
     return templates.TemplateResponse("update_supplier.html", {
         "request": request, 
         "supplier": supplier
@@ -201,12 +200,12 @@ async def edit_supplier_submit(
     db: Session = Depends(get_db)
 ):
     if action == "update":
-        crud.update_supplier_details(db, supplier_id, supplier_name, contact_number, items, total_due)
+        supplier_cruds.update_supplier_details(db, supplier_id, supplier_name, contact_number, items, total_due)
         return RedirectResponse(url="/suppliers", status_code=303)
     
     if action == "delete":
-        supplier = crud.get_supplier_by_id(db, supplier_id)
-        crud.delete_supplier(db, supplier)
+        supplier = supplier_cruds.get_supplier_by_id(db, supplier_id)
+        supplier_cruds.delete_supplier(db, supplier)
         return RedirectResponse(url="/suppliers", status_code=303)
 
 
@@ -216,18 +215,18 @@ async def add_supplier_submit(
     contact_number: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    crud.create_supplier(db,supplier_name=supplier_name, contact_number=contact_number)
+    supplier_cruds.create_supplier(db,supplier_name=supplier_name, contact_number=contact_number)
     return RedirectResponse(url="/suppliers", status_code=303)
 
 
 @app.get("/sales", response_class=HTMLResponse)
 async def sales_list(request: Request, db: Session = Depends(get_db)):
-    sales_data = crud.get_all_sales(db)
+    sales_data = sale_cruds.get_all_sales(db)
     return templates.TemplateResponse("sales.html", {"request": request, "sales": sales_data})
 
 @app.get("/sales/new", response_class=HTMLResponse)
 async def new_sale_form(request: Request, db: Session = Depends(get_db)):
-    products = crud.get_all_products(db)
+    products = product_cruds.get_all_products(db)
     return templates.TemplateResponse("add_sale.html", {"request": request, "products": products})
 
 @app.post("/sales/add")
@@ -237,7 +236,7 @@ async def add_sale_submit(
     total_amount: float = Form(...),
     db: Session = Depends(get_db)
 ):
-    crud.create_sale(db, product_name, quantity, total_amount)
+    sale_cruds.create_sale(db, product_name, quantity, total_amount)
     return RedirectResponse(url="/sales", status_code=303)
 
 @app.get("/products/{product_id}/update", response_class=HTMLResponse)
@@ -246,8 +245,8 @@ async def edit_product_form(
     product_id: int, 
     db: Session = Depends(get_db)):
 
-    product = crud.get_product_by_id(db, product_id)
-    suppliers_list = crud.get_all_suppliers(db)
+    product = product_cruds.get_product_by_id(db, product_id)
+    suppliers_list = supplier_cruds.get_all_suppliers(db)
 
     return templates.TemplateResponse("update_product.html", {
         "request": request, 
@@ -270,7 +269,7 @@ async def edit_product_submit(
     db: Session = Depends(get_db)
 ):
     if action == "update":
-        crud.update_product_details(
+        product_cruds.update_product_details(
             db, 
             product_id, 
             product_name, 
@@ -283,8 +282,8 @@ async def edit_product_submit(
         return RedirectResponse(url="/products", status_code=303)
     
     if action == "delete":
-        product = crud.get_product_by_id(db, product_id)
-        crud.delete_product(db, product)
+        product = product_cruds.get_product_by_id(db, product_id)
+        product_cruds.delete_product(db, product)
         return RedirectResponse(url="/products", status_code=303)
     return RedirectResponse(url="/products", status_code=303)
 
@@ -297,7 +296,7 @@ async def product_list(
     db: Session = Depends(get_db)
 ):
     # Call the filtered function
-    products_db = crud.get_products_filtered(db, search, category)
+    products_db = product_cruds.get_products_filtered(db, search, category)
     
     products_formatted = []
     for p in products_db:
