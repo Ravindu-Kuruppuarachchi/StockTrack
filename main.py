@@ -259,3 +259,51 @@ async def add_sale_submit(
 ):
     crud.create_sale(db, product_name, quantity, total_amount)
     return RedirectResponse(url="/sales", status_code=303)
+
+@app.get("/products/{product_id}/update", response_class=HTMLResponse)
+async def edit_product_form(
+    request: Request,
+    product_id: int, 
+    db: Session = Depends(get_db)):
+
+    product = crud.get_product_by_id(db, product_id)
+    suppliers_list = crud.get_all_suppliers(db)
+
+    return templates.TemplateResponse("update_product.html", {
+        "request": request, 
+        "product": product,
+        "suppliers": suppliers_list
+    })
+
+
+
+@app.post("/product/{product_id}/update", response_class=HTMLResponse)
+async def edit_product_submit(
+    product_id: int,
+    action: str = Form(...),
+    product_name: str = Form(...),
+    category: str = Form(...),
+    description: str = Form(...),
+    stocks: int = Form(...),
+    selling_price: float = Form(...),
+    buying_price: float = Form(...),
+    db: Session = Depends(get_db)
+):
+    if action == "update":
+        crud.update_product_details(
+            db, 
+            product_id, 
+            product_name, 
+            category, 
+            description, 
+            stocks, 
+            selling_price,
+            buying_price
+        )
+        return RedirectResponse(url="/products", status_code=303)
+    
+    if action == "delete":
+        product = crud.get_product_by_id(db, product_id)
+        crud.delete_product(db, product)
+        return RedirectResponse(url="/products", status_code=303)
+    return RedirectResponse(url="/products", status_code=303)

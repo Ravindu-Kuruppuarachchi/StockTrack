@@ -215,3 +215,22 @@ def create_product(db: Session, name: str, description: str, category: str, supp
 
 
     return new_product
+
+def update_product_details(db: Session, product_id: int, name: str, description: str, category: str, stocks: int, selling_price: float, buying_price: float):
+    product = get_product_by_id(db, product_id)
+    if product:
+        product.name = name  # type: ignore
+        product.description = description  # type: ignore
+        product.category = category  # type: ignore
+        product.stocks = stocks  # type: ignore
+        product.selling_price = selling_price  # type: ignore
+        product.buying_price = buying_price  # type: ignore
+        db.commit()
+    return product
+
+def delete_product(db: Session, product: Product):
+    db.delete(product)
+    db.commit()
+
+
+

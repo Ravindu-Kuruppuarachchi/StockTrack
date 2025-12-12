@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Edit product - Inventory{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Edit Product Details</h3>
+            <button type="button" class="btn btn-light border me-2" onclick="window.history.back()">Back to products</button>
+            
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form action="/product/{{ product.id }}/update" method="post">
+                    
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+
+                    <div class="mb-3">
+                        <label for="product_name" class="form-label fw-bold">Product Name</label>
+                        <input type="text" class="form-control" name="product_name" id="product_name" 
+                               value="{{ product.name }}" required readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category" class="form-label fw-bold">Category</label>
+                        <select class="form-control" name="category" id="category" required>
+                            <option value="Clothing" {% if product.category == 'Clothing' %}selected{% endif %}>Clothing</option>
+                            <option value="Electronics" {% if product.category == 'Electronics' %}selected{% endif %}>Electronics</option>
+                            <option value="Furniture" {% if product.category == 'Furniture' %}selected{% endif %}>Furniture</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-bold">Description</label>
+                        <input type="text" class="form-control" name="description" id="description" 
+                               value="{{ product.description }}" placeholder="Add description">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="stock" class="form-label fw-bold">Stocks</label>
+                        <input type="number" step="1" class="form-control" name="stocks" id="stocks" 
+                               value="{{ product.stocks }}" required>                         
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="selling_price" class="form-label fw-bold">Selling Price ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="selling_price" id="selling_price" 
+                               value="{{ product.selling_price }}" required>                         
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="buying_price" class="form-label fw-bold">Buying Price ($)</label>
+                        <input type="number" step="0.01" class="form-control" name="buying_price" id="buying_price" 
+                               value="{{ product.buying_price }}" required>                         
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" name="action" value="delete" class="btn btn-danger me-2">Delete Product</button>
+                        <button type="submit" name="action" value= "update" class="btn btn-primary px-4">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %} 
