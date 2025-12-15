@@ -6,9 +6,10 @@ from fastapi import Depends
 from database import get_db
 from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
 from typing import Optional
+from fastapi.staticfiles import StaticFiles 
 
 app = FastAPI(title="Inventory Management System")
-
+app.mount("/static", StaticFiles(directory="static"), name="static") 
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
@@ -317,3 +318,8 @@ async def product_list(
         "search_query": search,   # Send back to HTML
         "selected_category": category # Send back to HTML
     })
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "message": "Service is healthy"}
