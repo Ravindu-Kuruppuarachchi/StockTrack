@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, Date, ForeignKey,CheckConstraint
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -17,6 +17,10 @@ class Supplier(Base):
 
     supplied_products = relationship("Product", back_populates="supplier")
     orders = relationship("Order", back_populates="supplier")
+
+    __table_args__ = (
+    CheckConstraint('total_due >= 0', name='check_order_total_due_non_negative'),
+    )
 
 
 class User(Base):
@@ -42,6 +46,11 @@ class Product(Base):
     supplier = relationship("Supplier", back_populates="supplied_products")
     sales = relationship("Sale", back_populates="product")
 
+    __table_args__ = (
+    CheckConstraint('stocks >= 0', name='check_stock_positive'),
+    CheckConstraint('selling_price >= 0', name='check_selling_price_non_negative'),
+    )
+
 class Order(Base):
     __tablename__ = "orders"
     
@@ -56,6 +65,11 @@ class Order(Base):
     supplier_id = Column(Integer, ForeignKey("suppliers.id"))
     supplier = relationship("Supplier", back_populates="orders")
 
+    __table_args__ = (
+        CheckConstraint('quantity > 0', name='check_order_quantity_positive'),
+        CheckConstraint('total_cost >= 0', name='check_order_total_cost_non_negative'),
+    )
+
 
 class Sale(Base):
     __tablename__ = "sales"
@@ -68,3 +82,8 @@ class Sale(Base):
     
     product_id = Column(Integer, ForeignKey("products.id"))
     product = relationship("Product", back_populates="sales")
+
+    __table_args__ = (
+    CheckConstraint('quantity >= 1', name='check_order_quantity_positive'),
+    CheckConstraint('total_amount >= 0', name='check_order_total_amount_non_negative'),
+    )
