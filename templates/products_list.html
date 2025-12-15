@@ -26,18 +26,14 @@
             <div class="col-md-3">
                 <select class="form-select" name="category">
                     <option value="All Categories"{% if not selected_category or selected_category=='All Categories'%}selected{% endif%}>All Categories</option>
-                    
                     <option value="Clothing" {%if selected_category=='Clothing' %}selected{% endif %}>Clothing</option>
                     <option value="Electronics" {%if selected_category== 'Electronics'%}selected{% endif %}>Electronics</option>
                     <option value="Furniture"{%if selected_category =='Furniture'%}selected{% endif %}>Furniture</option>
                 </select>
             </div>
-
-            
             <div class="col-md-2">
                 <button type="submit"class="btn btn-outline-secondary w-100">Filter</button>
             </div>
-            
             <div class="col-md-2">
                 <a href="/products"class="btn btn-light w-100">Clear</a>
             </div>
@@ -54,12 +50,13 @@
                         <th style="width: 30%;">Product Info</th>
                         <th style="width: 20%;">Category & Supplier</th>
                         <th style="width: 15%;">Stock</th>
-                        <th style="width: 20%;">Pricing</th> <th style="width: 15%;" class="text-end">Actions</th>
+                        <th style="width: 20%;">Pricing</th> 
+                        <th style="width: 15%;" class="text-end">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     {% for product in products %}
-                    <tr>
+                    <tr class="product-row">
                         <td class="align-top pt-3">
                             <h5 class="mb-1 fw-bold text-primary">{{ product.name }}</h5>
                             <small class="text-muted">ID: #{{ product.id }}</small>
@@ -105,7 +102,99 @@
                     {% endfor %}
                 </tbody>
             </table>
+            
+            <div class="card-footer bg-white py-3">
+                <nav aria-label="Product pagination">
+                    <ul class="pagination justify-content-center mb-0" id="paginationControls">
+                        </ul>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const rowsPerPage = 8; 
+        // 1. Find the table body by ID
+        const tableBody = document.getElementById("tableBody");
+        const paginationControls = document.getElementById("paginationControls");
+        
+        // 2. Find rows by Class Name
+        const rows = tableBody.querySelectorAll(".product-row");
+        const rowCount = rows.length;
+        const pageCount = Math.ceil(rowCount / rowsPerPage);
+        let currentPage = 1;
+
+        if (rowCount === 0) {
+            paginationControls.style.display = 'none';
+            return;
+        }
+
+        function displayRows(page) {
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            rows.forEach((row, index) => {
+                if (index >= start && index < end) {
+                    row.style.display = ""; //Show
+                } else {
+                    row.style.display = "none"; //Hide
+                }
+            });
+        }
+
+        function setupPagination() {
+            paginationControls.innerHTML = "";
+
+            // Previous Button
+            let prevLi = document.createElement("li");
+            prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+            prevLi.innerHTML = `<a class="page-link" href="#">Previous</a>`;
+            prevLi.onclick = (e) => {
+                e.preventDefault();
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePagination();
+                }
+            };
+            paginationControls.appendChild(prevLi);
+
+            // Page Numbers
+            for (let i = 1; i <= pageCount; i++) {
+                let li = document.createElement("li");
+                li.className = `page-item ${i === currentPage ? "active" : ""}`;
+                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                li.onclick = (e) => {
+                    e.preventDefault();
+                    currentPage = i;
+                    updatePagination();
+                };
+                paginationControls.appendChild(li);
+            }
+
+            // Next Button
+            let nextLi = document.createElement("li");
+            nextLi.className = `page-item ${currentPage === pageCount ? "disabled" : ""}`;
+            nextLi.innerHTML = `<a class="page-link" href="#">Next</a>`;
+            nextLi.onclick = (e) => {
+                e.preventDefault();
+                if (currentPage < pageCount) {
+                    currentPage++;
+                    updatePagination();
+                }
+            };
+            paginationControls.appendChild(nextLi);
+        }
+
+        function updatePagination() {
+            displayRows(currentPage);
+            setupPagination();
+        }
+
+        // Initialize
+        updatePagination();
+    });
+</script>
+
 {% endblock %}

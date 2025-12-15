@@ -16,7 +16,7 @@
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" id="salesTable">
                 <thead class="table-light">
                     <tr>
                         <th>Sale ID</th>
@@ -26,9 +26,9 @@
                         <th>Date</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     {% for sale in sales %}
-                    <tr>
+                    <tr class="sale-row">
                         <td class="fw-bold">#{{ sale.id }}</td>
                         <td>{{ sale.product_name }}</td>
                         <td>{{ sale.quantity }}</td>
@@ -36,7 +36,7 @@
                         <td>{{ sale.sale_date }}</td>
                     </tr>
                     {% else %}
-                    <tr>
+                    <tr class="no-data">
                         <td colspan="5" class="text-center py-4 text-muted">
                             No sales recorded yet.
                         </td>
@@ -46,5 +46,95 @@
             </table>
         </div>
     </div>
+    
+    <div class="card-footer bg-white py-3">
+        <nav aria-label="Sales pagination">
+            <ul class="pagination justify-content-center mb-0" id="paginationControls">
+                </ul>
+        </nav>
+    </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const rowsPerPage = 10; 
+        const tableBody = document.getElementById("tableBody");
+        const paginationControls = document.getElementById("paginationControls");
+        
+        const rows = tableBody.querySelectorAll(".sale-row");
+        const rowCount = rows.length;
+        const pageCount = Math.ceil(rowCount / rowsPerPage);
+        let currentPage = 1;
+
+        // If no data, hide pagination
+        if (rowCount === 0) {
+            paginationControls.style.display = 'none';
+            return;
+        }
+
+        function displayRows(page) {
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            rows.forEach((row, index) => {
+                if (index >= start && index < end) {
+                    row.style.display = ""; //Show
+                } else {
+                    row.style.display = "none"; //Hide
+                }
+            });
+        }
+
+        function setupPagination() {
+            paginationControls.innerHTML = "";
+
+            // Previous Button
+            let prevLi = document.createElement("li");
+            prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+            prevLi.innerHTML = `<a class="page-link" href="#">Previous</a>`;
+            prevLi.onclick = (e) => {
+                e.preventDefault();
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePagination();
+                }
+            };
+            paginationControls.appendChild(prevLi);
+
+            // Page Numbers
+            for (let i = 1; i <= pageCount; i++) {
+                let li = document.createElement("li");
+                li.className = `page-item ${i === currentPage ? "active" : ""}`;
+                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                li.onclick = (e) => {
+                    e.preventDefault();
+                    currentPage = i;
+                    updatePagination();
+                };
+                paginationControls.appendChild(li);
+            }
+
+            // Next Button
+            let nextLi = document.createElement("li");
+            nextLi.className = `page-item ${currentPage === pageCount ? "disabled" : ""}`;
+            nextLi.innerHTML = `<a class="page-link" href="#">Next</a>`;
+            nextLi.onclick = (e) => {
+                e.preventDefault();
+                if (currentPage < pageCount) {
+                    currentPage++;
+                    updatePagination();
+                }
+            };
+            paginationControls.appendChild(nextLi);
+        }
+
+        function updatePagination() {
+            displayRows(currentPage);
+            setupPagination();
+        }
+
+        // Initialize
+        updatePagination();
+    });
+</script>
 {% endblock %}
