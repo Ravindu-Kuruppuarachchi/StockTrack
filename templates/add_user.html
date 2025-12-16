@@ -8,20 +8,38 @@
             <h3>Update User Details</h3>
             <button type="button" class="btn btn-light border me-2" onclick="window.history.back()">Cancel</button>
         </div>
+
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
-                <form action="/login/update" method="post">
+                <form action="/login/update" method="post" id="userForm" novalidate>
+                    
                     <div class="mb-3">
                         <label for="email" class="form-label fw-bold">Email Address</label>
-                        <input type="email" class="form-control" name="email" id="email" placeholder="Enter Email" required>
+                        <input type="email" class="form-control" name="email" id="email" 
+                               placeholder="Enter Email" value="{{ email if email else '' }}" required>         
+                        <div class="invalid-feedback">
+                            Please enter a valid email address.
+                        </div>
                     </div>
+
                     <div class="mb-3">
                         <label for="password" class="form-label fw-bold">Password</label>
-                        <input type="password" class="form-control" name="password" id="password" placeholder="Enter Password" required>
+                        <input type="password" class="form-control" name="password" id="password" value="" placeholder="Enter Password" required>
+                        <div class="invalid-feedback">
+                            Password must be more than 8 characters long.
+                        </div>
                     </div>
+
                     <hr>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="submit" name="action" value="delete" class="btn btn-danger me-2">Delete User</button>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger me-2" >Delete User</button>
                         <button type="submit" name="action" value="update" class="btn btn-primary px-4">Update / Add User</button>
                     </div>
                 </form>
@@ -29,4 +47,56 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('userForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    function validateEmail() {
+        const emailValue = emailInput.value.trim();
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailValue === '' || !emailPattern.test(emailValue)) {
+            emailInput.classList.add('is-invalid');
+            emailInput.classList.remove('is-valid');
+            return false;
+        } else {
+            emailInput.classList.remove('is-invalid');
+            emailInput.classList.add('is-valid');
+            return true;
+        }
+    }
+
+    function validatePassword() {
+        const passwordValue = passwordInput.value;
+        if (passwordValue.length <= 8) {
+            passwordInput.classList.add('is-invalid');
+            passwordInput.classList.remove('is-valid');
+            return false;
+        } else {
+            passwordInput.classList.remove('is-invalid');
+            passwordInput.classList.add('is-valid');
+            return true;
+        }
+    }
+
+    // Real-time validation
+    emailInput.addEventListener('input', validateEmail);
+    emailInput.addEventListener('blur', validateEmail);
+    passwordInput.addEventListener('input', validatePassword);
+    passwordInput.addEventListener('blur', validatePassword);
+
+    form.addEventListener('submit', function(e) {
+
+        const isEmailValid = validateEmail();
+        const isPasswordValid = validatePassword();
+        if (!isEmailValid || !isPasswordValid) {
+            e.preventDefault(); 
+            if (!isEmailValid) emailInput.focus();
+            else passwordInput.focus();
+        }
+    });
+});
+</script>
 {% endblock %}

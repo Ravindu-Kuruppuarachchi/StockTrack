@@ -13,7 +13,7 @@
 
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
-                <form action="/suppliers/place" method="post">
+                <form action="/suppliers/place" method="post" id="supplierForm">
                     
                     <div class="mb-3">
                         <label for="supplier_id" class="form-label fw-bold">Supplier Name</label>
@@ -21,8 +21,11 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="product_name" class="form-label fw-bold">Condatct Number</label>
-                        <input type="text" class="form-control" name="contact_number" id="contact_number" placeholder="e.g. +94-567-8901" required>
+                        <label for="product_name" class="form-label fw-bold">Contact Number</label>
+                        <input type="tel" class="form-control" name="contact_number" id="contact_number" placeholder="e.g. Enter Valid Number" required>
+                        <div class="invalid-feedback" id="phoneError">
+                            Please enter a valid Sri Lankan number (e.g. 071... or +9471...).
+                        </div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -32,7 +35,88 @@
                 </form>
             </div>
         </div>
-
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('supplierForm');
+    const phoneInput = document.getElementById('contact_number');
+    const phoneError = document.getElementById('phoneError');
+
+    // Validation Logic
+    function isValidPhoneNumber(phone) {
+        // Remove spaces, dashes, parentheses to check raw digits
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+
+        // Pattern 1:10 digits total
+        const localPattern = /^0\d{9}$/;
+        // Pattern 2: +94 followed by 9 digits
+        const internationalPattern = /^\+94\d{9}$/;
+
+        return localPattern.test(cleanPhone) || internationalPattern.test(cleanPhone);
+    }
+
+    function validatePhone() {
+        const phoneValue = phoneInput.value.trim();
+        
+        if (phoneValue === '') {
+            phoneInput.classList.remove('is-invalid', 'is-valid');
+            phoneError.style.display = 'none';
+            return true; 
+        }
+
+        const isValid = isValidPhoneNumber(phoneValue);
+
+        if (!isValid) {
+            phoneInput.classList.add('is-invalid');
+            phoneInput.classList.remove('is-valid');
+            phoneError.style.display = 'block';
+            return false;
+        } else {
+            phoneInput.classList.remove('is-invalid');
+            phoneInput.classList.add('is-valid');
+            phoneError.style.display = 'none';
+            return true;
+        }
+    }
+
+    // Formatting Logic
+    function formatPhoneNumberForSave(phone) {
+        // Clean to raw digits (and + sign)
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+
+        // Format: 071-234-4567
+        if (cleanPhone.startsWith('0')) {
+            return cleanPhone.replace(/^0(\d{2})(\d{3})(\d{4})$/, '0$1-$2-$3');
+        } 
+        
+        // Format: +94 71-234-4567
+        if (cleanPhone.startsWith('+94')) {
+            return cleanPhone.replace(/^\+94(\d{2})(\d{3})(\d{4})$/, '+94 $1-$2-$3');
+        }
+
+        return cleanPhone;
+    }
+
+    // Event Listeners
+    phoneInput.addEventListener('input', validatePhone);
+    phoneInput.addEventListener('blur', validatePhone);
+
+    form.addEventListener('submit', function(e) {
+        // Validate first
+        if (!validatePhone()) {
+            e.preventDefault(); // Stop submission if invalid
+            phoneInput.focus();
+            return false;
+        }
+
+        // If valid, format the value inside the input before sending
+        const currentVal = phoneInput.value;
+        const formattedVal = formatPhoneNumberForSave(currentVal);
+        
+        phoneInput.value = formattedVal;
+    });
+});
+</script>
 {% endblock %}

@@ -116,11 +116,11 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const rowsPerPage = 8; 
-        // 1. Find the table body by ID
+
         const tableBody = document.getElementById("tableBody");
         const paginationControls = document.getElementById("paginationControls");
         
-        // 2. Find rows by Class Name
+        // Find rows by Class Name
         const rows = tableBody.querySelectorAll(".product-row");
         const rowCount = rows.length;
         const pageCount = Math.ceil(rowCount / rowsPerPage);

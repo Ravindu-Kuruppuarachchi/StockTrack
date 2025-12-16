@@ -9,12 +9,11 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>Edit Supplier Details</h3>
             <button type="button" class="btn btn-light border me-2" onclick="window.history.back()">Back to Suppliers</button>
-            
         </div>
 
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
-                <form action="/suppliers/{{ supplier.id }}/update" method="post">
+                <form action="/suppliers/{{ supplier.id }}/update" method="post" id="supplierForm">
                     
                     <input type="hidden" name="supplier_id" value="{{ supplier.id }}">
 
@@ -27,7 +26,10 @@
                     <div class="mb-3">
                         <label for="contact_number" class="form-label fw-bold">Contact Number</label>
                         <input type="text" class="form-control" name="contact_number" id="contact_number" 
-                               value="{{ supplier.contact }}" required>
+                               value="{{ supplier.contact }}" placeholder="e.g. 071... or +94..." required>
+                        <div class="invalid-feedback" id="phoneError">
+                            Please enter a valid Sri Lankan number (e.g. 071... or +9471...).
+                        </div>
                     </div>
                     
                     <div class="mb-3">
@@ -40,12 +42,11 @@
                         <label for="total_due" class="form-label fw-bold">Total Due ($)</label>
                         <input type="number" step="0.01" class="form-control" name="total_due" id="total_due" min="0" max="9999999.99"
                                value="{{ supplier.total_due }}" required>
-                               
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="submit" name="action" value="delete" class="btn btn-danger me-2">Delete Supplier</button>
-                        <button type="submit" name="action" value= "update" class="btn btn-primary px-4">Save Changes</button>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger me-2" formnovalidate>Delete Supplier</button>
+                        <button type="submit" name="action" value="update" class="btn btn-primary px-4">Save Changes</button>
                     </div>
                 </form>
             </div>
@@ -53,4 +54,87 @@
 
     </div>
 </div>
-{% endblock %} 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('supplierForm');
+    const phoneInput = document.getElementById('contact_number');
+    const phoneError = document.getElementById('phoneError');
+    const submitBtn = form.querySelector('button[value="update"]');
+
+    // Validation Logic
+    function isValidPhoneNumber(phone) {
+        // Remove spaces, dashes, parentheses to check raw digits
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+
+        // Starts with 0 -> 10 digits total
+        const localPattern = /^0\d{9}$/;
+        // Starts with +94 -> 11 digits total (implicit)
+        const internationalPattern = /^\+94\d{9}$/;
+
+        return localPattern.test(cleanPhone) || internationalPattern.test(cleanPhone);
+    }
+
+    function validatePhone() {
+        const phoneValue = phoneInput.value.trim();
+        
+        if (phoneValue === '') {
+            phoneInput.classList.remove('is-invalid', 'is-valid');
+            phoneError.style.display = 'none';
+            return true; 
+        }
+
+        const isValid = isValidPhoneNumber(phoneValue);
+
+        if (!isValid) {
+            phoneInput.classList.add('is-invalid');
+            phoneInput.classList.remove('is-valid');
+            phoneError.style.display = 'block';
+            return false;
+        } else {
+            phoneInput.classList.remove('is-invalid');
+            phoneInput.classList.add('is-valid');
+            phoneError.style.display = 'none';
+            return true;
+        }
+    }
+
+    //Formatting Logic
+    function formatPhoneNumberForSave(phone) {
+        // Clean to raw digits (and + sign)
+        const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+
+        // 071-234-4567
+        if (cleanPhone.startsWith('0')) {
+            return cleanPhone.replace(/^0(\d{2})(\d{3})(\d{4})$/, '0$1-$2-$3');
+        } 
+        
+        // +94 71-234-4567
+        if (cleanPhone.startsWith('+94')) {
+            return cleanPhone.replace(/^\+94(\d{2})(\d{3})(\d{4})$/, '+94 $1-$2-$3');
+        }
+
+        return cleanPhone;
+    }
+
+    // Event Listeners
+    phoneInput.addEventListener('input', validatePhone);
+    phoneInput.addEventListener('blur', validatePhone);
+
+    // Handle Form Submission
+    form.addEventListener('submit', function(e) {
+
+        if (!validatePhone()) {
+            e.preventDefault(); 
+            phoneInput.focus();
+            return false;
+        }
+
+        const currentVal = phoneInput.value;
+        const formattedVal = formatPhoneNumberForSave(currentVal);
+        phoneInput.value = formattedVal;
+    });
+})
+
+</script>
+{% endblock %}

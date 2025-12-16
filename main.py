@@ -28,13 +28,11 @@ async def login_submit(
     db: Session = Depends(get_db)
 ):
     user = login_cruds.get_user_by_email(db, email)
-
     if not user or password != user.password:
         return templates.TemplateResponse("login.html", {
             "request": request, 
             "error": "Invalid email or password"
         })
-    
     response = RedirectResponse(url="/products", status_code=303)
     return response
 
@@ -45,33 +43,54 @@ async def logout():
     return response
 
 @app.get("/login/update", response_class=HTMLResponse)
-async def update_login(request: Request):
-    return templates.TemplateResponse("add_user.html", {"request": request})
-
+async def update_login(
+    request: Request, 
+    error: Optional[str] = None,   # Accepts a string or None
+    success: Optional[str] = None  # Accepts a string or None
+):
+    return templates.TemplateResponse("add_user.html", {
+        "request": request,
+        "error": error,
+        "success": success
+    })
 
 @app.post("/login/update")
 async def update_login_submit( 
+    request: Request,
     action: str = Form(...),
     email: str = Form(...), 
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
     user = login_cruds.get_user_by_email(db, email)
-    
+    user_password =user.password if user else None
+
     if action == "delete":
-        if user:
+        print("Delete action triggered")
+        if user and password == user_password:
             login_cruds.delete_user(db, user)
-        return RedirectResponse(url="/login", status_code=303)
+            return RedirectResponse(url="/login/update?success=User deleted successfully", status_code=303)
+        else:
+            # User not found - show error with the email preserved
+            return templates.TemplateResponse(
+                "add_user.html",
+                {
+                    "request": request,
+                    "error": "User with this email and password does not exist.",
+                    "email": email  # Preserve the email that was entered
+                }
+            )
     
     if action == "update":
         if user:
             login_cruds.update_user_password(db, user, password)
-            return RedirectResponse(url="/products", status_code=303)
+            return RedirectResponse(url="/login/update?success=User updated successfully", status_code=303)
         else:
             login_cruds.create_user(db, email, password)
-            return RedirectResponse(url="/products", status_code=303)
+            return RedirectResponse(url="/login/update?success=User created successfully", status_code=303)
     
     return RedirectResponse(url="/products", status_code=303)
+
 
 # SUPPLIERS ROUTES
 @app.get("/suppliers", response_class=HTMLResponse)
