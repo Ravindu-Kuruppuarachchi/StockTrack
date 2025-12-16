@@ -7,6 +7,7 @@ from database import get_db
 from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
 from typing import Optional
 from fastapi.staticfiles import StaticFiles 
+from hashing import Hash
 
 app = FastAPI(title="Inventory Management System")
 app.mount("/static", StaticFiles(directory="static"), name="static") 
@@ -28,7 +29,7 @@ async def login_submit(
     db: Session = Depends(get_db)
 ):
     user = login_cruds.get_user_by_email(db, email)
-    if not user or password != user.password:
+    if not user or not Hash.verify(password, user.password):
         return templates.TemplateResponse("login.html", {
             "request": request, 
             "error": "Invalid email or password"
@@ -45,8 +46,8 @@ async def logout():
 @app.get("/login/update", response_class=HTMLResponse)
 async def update_login(
     request: Request, 
-    error: Optional[str] = None,   # Accepts a string or None
-    success: Optional[str] = None  # Accepts a string or None
+    error: Optional[str] = None,   
+    success: Optional[str] = None  
 ):
     return templates.TemplateResponse("add_user.html", {
         "request": request,
@@ -63,11 +64,10 @@ async def update_login_submit(
     db: Session = Depends(get_db)
 ):
     user = login_cruds.get_user_by_email(db, email)
-    user_password =user.password if user else None
 
     if action == "delete":
         print("Delete action triggered")
-        if user and password == user_password:
+        if user and Hash.verify(password, user.password):
             login_cruds.delete_user(db, user)
             return RedirectResponse(url="/login/update?success=User deleted successfully", status_code=303)
         else:
