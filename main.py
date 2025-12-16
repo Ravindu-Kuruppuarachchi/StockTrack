@@ -5,13 +5,37 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from database import get_db
 from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
+from starlette.middleware.sessions import SessionMiddleware
 from typing import Optional
 from fastapi.staticfiles import StaticFiles 
 from hashing import Hash
+import time
 
 app = FastAPI(title="Inventory Management System")
 app.mount("/static", StaticFiles(directory="static"), name="static") 
 templates = Jinja2Templates(directory="templates")
+
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key="your-secret-key123", 
+    max_age=3600 
+)
+
+def check_session(request: Request):
+    user_email = request.session.get("user_email")
+    login_time = request.session.get("login_time")
+
+    # Check if user is logged in
+    if not user_email or not login_time:
+        return False
+
+    # Check if 1 hour has passed
+    current_time = time.time()
+    if current_time - login_time > 3600:
+        request.session.clear() # Clear expired session
+        return False
+
+    return True
 
 @app.get("/")
 async def root():
@@ -34,14 +58,18 @@ async def login_submit(
             "request": request, 
             "error": "Invalid email or password"
         })
+    
+    # Set session variables
+    request.session["user_email"] = user.email
+    request.session["login_time"] = time.time()
+    
     response = RedirectResponse(url="/products", status_code=303)
     return response
 
 @app.get("/logout")
-async def logout():
-    response = RedirectResponse(url="/login")
-    response.delete_cookie("user_session")
-    return response
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/login", status_code=303)
 
 @app.get("/login/update", response_class=HTMLResponse)
 async def update_login(
@@ -95,6 +123,14 @@ async def update_login_submit(
 # SUPPLIERS ROUTES
 @app.get("/suppliers", response_class=HTMLResponse)
 async def read_suppliers(request: Request, db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     suppliers_db = supplier_cruds.get_all_suppliers(db)
     
     suppliers_list = []
@@ -149,6 +185,13 @@ async def product_create_submit(
 # ORDER ROUTES
 @app.get("/orders", response_class=HTMLResponse)
 async def orders_page(request: Request, db: Session = Depends(get_db)):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     # Fetch orders, newest first
     orders_data = order_cruds.get_all_orders(db)
     return templates.TemplateResponse("orders.html", {"request": request, "orders": orders_data})
@@ -241,6 +284,14 @@ async def add_supplier_submit(
 
 @app.get("/sales", response_class=HTMLResponse)
 async def sales_list(request: Request, db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     sales_data = sale_cruds.get_all_sales(db)
     return templates.TemplateResponse("sales.html", {"request": request, "sales": sales_data})
 
@@ -315,6 +366,14 @@ async def product_list(
     category: Optional[str] = None, 
     db: Session = Depends(get_db)
 ):
+    
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     # Call the filtered function
     products_db = product_cruds.get_products_filtered(db, search, category)
     
