@@ -16,7 +16,7 @@ def create_order(db: Session, supplier_id: int, product_name: str, quantity: int
     supplier = supplier_cruds.get_supplier_by_id(db, supplier_id)
     
     if supplier:
-        # 1. Update Supplier Stats
+        # Update Supplier Stats
         supplier.last_order_qty = quantity # type: ignore
         supplier.last_order_received = False #type: ignore
         supplier.last_order_date = date.today() # type: ignore
@@ -24,7 +24,7 @@ def create_order(db: Session, supplier_id: int, product_name: str, quantity: int
         supplier.total_due = current_due + total_cost # type: ignore
         supplier.payment_status = False # type: ignore
 
-        # 2. Create Order History Record
+        # Create Order History Record
         new_order = Order(
             supplier_id=supplier.id,
             product_names=product_name, 
@@ -36,7 +36,7 @@ def create_order(db: Session, supplier_id: int, product_name: str, quantity: int
         )
         db.add(new_order)
         
-        # 3. Update Supplier Product List String
+        # Update Supplier Product List String
         current_products = str(supplier.products)
         
         if current_products:
@@ -56,7 +56,7 @@ def update_order_state(db: Session, order_id: int, action: str):
     order = get_order_by_id(db, order_id)
     if not order:
         return None
-    # Logic to handle Status (Received)
+    # Logic to handle Status
     if action == "receive":
         order.status = True# type: ignore
         if order.supplier:
@@ -79,7 +79,7 @@ def update_order_state(db: Session, order_id: int, action: str):
             )
             db.add(new_product)
 
-    # Logic to handle Payment (Paid)
+    # Logic to handle Payment
     elif action == "pay":
         order.payment_status = True# type: ignore
         if order.payment_status:# type: ignore

@@ -75,6 +75,7 @@ async def login_submit(
 async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("session")
 
 @app.get("/login/update", response_class=HTMLResponse)
 async def update_login(
@@ -82,6 +83,13 @@ async def update_login(
     error: Optional[str] = None,   
     success: Optional[str] = None  
 ):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     return templates.TemplateResponse("add_user.html", {
         "request": request,
         "error": error,
@@ -96,6 +104,7 @@ async def update_login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    
     user = login_cruds.get_user_by_email(db, email)
 
     if action == "delete":
@@ -104,7 +113,7 @@ async def update_login_submit(
             login_cruds.delete_user(db, user)
             return RedirectResponse(url="/login/update?success=User deleted successfully", status_code=303)
         else:
-            # User not found - show error with the email preserved
+            # User not found. show error with the email preserved
             return templates.TemplateResponse(
                 "add_user.html",
                 {
@@ -161,6 +170,14 @@ async def read_suppliers(request: Request, db: Session = Depends(get_db)):
 @app.get("/products/create", response_class=HTMLResponse)
 async def product_create(request: Request, db: Session = Depends(get_db)):
 
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
+
     suppliers_list = supplier_cruds.get_all_suppliers(db)
 
     return templates.TemplateResponse("product_create.html", {
@@ -201,9 +218,17 @@ async def orders_page(request: Request, db: Session = Depends(get_db)):
     orders_data = order_cruds.get_all_orders(db)
     return templates.TemplateResponse("orders.html", {"request": request, "orders": orders_data})
 
-# 2. PLACE ORDER FORM PAGE
+# PLACE ORDER FORM PAGE
 @app.get("/orders/new", response_class=HTMLResponse)
 async def place_order_form(request: Request, supplier_id: int, db: Session = Depends(get_db)):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
+
     suppliers_db = supplier_cruds.get_all_suppliers(db)
     return templates.TemplateResponse("place_order.html", {
         "request": request, 
@@ -211,7 +236,7 @@ async def place_order_form(request: Request, supplier_id: int, db: Session = Dep
         "selected_id": supplier_id
     })
 
-# 3. PLACE ORDER SUBMISSION 
+# PLACE ORDER SUBMISSION 
 @app.post("/orders/place")
 async def place_order_submit(
     supplier_id: int = Form(...),
@@ -243,6 +268,13 @@ async def update_order_status(
 
 @app.get("/supplier/newsupplier", response_class=HTMLResponse)
 async def add_suppier(request: Request):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     return templates.TemplateResponse("add_supplier.html", {"request": request})
 
 @app.get("/suppliers/{supplier_id}/update", response_class=HTMLResponse)
@@ -250,6 +282,13 @@ async def edit_supplier_form(
     request: Request,
     supplier_id: int, 
     db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
 
     supplier = supplier_cruds.get_supplier_by_id(db, supplier_id)
     return templates.TemplateResponse("update_supplier.html", {
@@ -302,6 +341,13 @@ async def sales_list(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/sales/new", response_class=HTMLResponse)
 async def new_sale_form(request: Request, db: Session = Depends(get_db)):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     products = product_cruds.get_all_products(db)
     return templates.TemplateResponse("add_sale.html", {"request": request, "products": products})
 
@@ -320,6 +366,13 @@ async def edit_product_form(
     request: Request,
     product_id: int, 
     db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
 
     product = product_cruds.get_product_by_id(db, product_id)
     suppliers_list = supplier_cruds.get_all_suppliers(db)
