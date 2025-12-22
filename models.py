@@ -38,6 +38,7 @@ class Product(Base):
     description = Column(String)
     category = Column(String)
     stocks = Column(Integer)
+    # The actual DB column name is "Selling_price_unit"
     selling_price = Column("Selling_price_unit", Float) 
     buying_price  = Column("Buying_price", Float)
     
@@ -47,8 +48,8 @@ class Product(Base):
     sales = relationship("Sale", back_populates="product")
 
     __table_args__ = (
-    CheckConstraint('stocks >= 0', name='check_stock_positive'),
-    CheckConstraint('selling_price >= 0', name='check_selling_price_non_negative'),
+        CheckConstraint('stocks >= 0', name='check_stock_positive'),
+        CheckConstraint('"Selling_price_unit" >= 0', name='check_selling_price_non_negative'),
     )
 
 class Order(Base):

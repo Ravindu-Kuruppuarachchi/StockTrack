@@ -1,16 +1,100 @@
+import os
 from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from fastapi import Depends
-from database import get_db
+from database import SessionLocal, get_db
 from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
+from starlette.middleware.sessions import SessionMiddleware
 from typing import Optional
 from fastapi.staticfiles import StaticFiles 
+from hashing import Hash
+import time
+from database import engine
+from contextlib import asynccontextmanager
+from dotenv import load_dotenv  # <--- 1. ADD THIS IMPORT
 
-app = FastAPI(title="Inventory Management System")
+import models 
+
+models.Base.metadata.create_all(bind=engine)
+
+
+# Password & Admin Seeder Setup
+load_dotenv()
+def create_initial_admin():
+    db = SessionLocal()
+    try:
+        admin_email = os.getenv("ADMIN_EMAIL")
+        admin_pass = os.getenv("ADMIN_PASSWORD")
+        
+        if not admin_email or not admin_pass:
+            print(" No ADMIN_EMAIL or ADMIN_PASSWORD found in .env. Skipping seeding.")
+            return
+
+        # Check if user already exists
+        existing_user = db.query(models.User).filter(models.User.email == admin_email).first()
+        
+        if existing_user:
+            print(f" Admin user {admin_email} already exists.")
+        else:
+            print(f" Creating initial admin user: {admin_email}")
+            hashed_password = Hash.bcrypt(admin_pass)
+            
+            new_admin = models.User(
+                email=admin_email,
+                password=hashed_password
+            )
+            db.add(new_admin)
+            db.commit()
+            print(" Admin created successfully!")
+            
+    except Exception as e:
+        print(f"Error creating initial admin: {e}")
+    finally:
+        db.close()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup 
+    print("Application Starting Up")
+    create_initial_admin()
+    yield
+    print("Application Shutting Down")
+
+app = FastAPI(title="Inventory Management System", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static") 
 templates = Jinja2Templates(directory="templates")
+
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key="your-secret-key123", 
+    max_age=3600 
+)
+
+@app.middleware("http")
+async def add_no_cache_header(request: Request, call_next):
+    response = await call_next(request)
+    # These headers tell the browser: "Stop! Do not save this page."
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+def check_session(request: Request):
+    user_email = request.session.get("user_email")
+    login_time = request.session.get("login_time")
+
+    # Check if user is logged in
+    if not user_email or not login_time:
+        return False
+
+    # Check if 1 hour has passed
+    current_time = time.time()
+    if current_time - login_time > 3600:
+        request.session.clear() # Clear expired session
+        return False
+    return True
 
 @app.get("/")
 async def root():
@@ -28,26 +112,39 @@ async def login_submit(
     db: Session = Depends(get_db)
 ):
     user = login_cruds.get_user_by_email(db, email)
-    if not user or password != user.password:
+    if not user or not Hash.verify(password, user.password):
         return templates.TemplateResponse("login.html", {
             "request": request, 
             "error": "Invalid email or password"
         })
+    
+    # Set session variables
+    request.session["user_email"] = user.email
+    request.session["login_time"] = time.time()
+    
     response = RedirectResponse(url="/products", status_code=303)
     return response
 
 @app.get("/logout")
-async def logout():
-    response = RedirectResponse(url="/login")
-    response.delete_cookie("user_session")
+async def logout(request: Request):
+    request.session.clear()
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("session")
     return response
 
 @app.get("/login/update", response_class=HTMLResponse)
 async def update_login(
     request: Request, 
-    error: Optional[str] = None,   # Accepts a string or None
-    success: Optional[str] = None  # Accepts a string or None
+    error: Optional[str] = None,   
+    success: Optional[str] = None  
 ):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     return templates.TemplateResponse("add_user.html", {
         "request": request,
         "error": error,
@@ -62,16 +159,16 @@ async def update_login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    
     user = login_cruds.get_user_by_email(db, email)
-    user_password =user.password if user else None
 
     if action == "delete":
         print("Delete action triggered")
-        if user and password == user_password:
+        if user and Hash.verify(password, user.password):
             login_cruds.delete_user(db, user)
             return RedirectResponse(url="/login/update?success=User deleted successfully", status_code=303)
         else:
-            # User not found - show error with the email preserved
+            # User not found. show error with the email preserved
             return templates.TemplateResponse(
                 "add_user.html",
                 {
@@ -95,6 +192,14 @@ async def update_login_submit(
 # SUPPLIERS ROUTES
 @app.get("/suppliers", response_class=HTMLResponse)
 async def read_suppliers(request: Request, db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     suppliers_db = supplier_cruds.get_all_suppliers(db)
     
     suppliers_list = []
@@ -119,6 +224,14 @@ async def read_suppliers(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/products/create", response_class=HTMLResponse)
 async def product_create(request: Request, db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
 
     suppliers_list = supplier_cruds.get_all_suppliers(db)
 
@@ -149,13 +262,28 @@ async def product_create_submit(
 # ORDER ROUTES
 @app.get("/orders", response_class=HTMLResponse)
 async def orders_page(request: Request, db: Session = Depends(get_db)):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     # Fetch orders, newest first
     orders_data = order_cruds.get_all_orders(db)
     return templates.TemplateResponse("orders.html", {"request": request, "orders": orders_data})
 
-# 2. PLACE ORDER FORM PAGE
+# PLACE ORDER FORM PAGE
 @app.get("/orders/new", response_class=HTMLResponse)
 async def place_order_form(request: Request, supplier_id: int, db: Session = Depends(get_db)):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
+
     suppliers_db = supplier_cruds.get_all_suppliers(db)
     return templates.TemplateResponse("place_order.html", {
         "request": request, 
@@ -163,7 +291,7 @@ async def place_order_form(request: Request, supplier_id: int, db: Session = Dep
         "selected_id": supplier_id
     })
 
-# 3. PLACE ORDER SUBMISSION 
+# PLACE ORDER SUBMISSION 
 @app.post("/orders/place")
 async def place_order_submit(
     supplier_id: int = Form(...),
@@ -195,6 +323,13 @@ async def update_order_status(
 
 @app.get("/supplier/newsupplier", response_class=HTMLResponse)
 async def add_suppier(request: Request):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     return templates.TemplateResponse("add_supplier.html", {"request": request})
 
 @app.get("/suppliers/{supplier_id}/update", response_class=HTMLResponse)
@@ -202,6 +337,13 @@ async def edit_supplier_form(
     request: Request,
     supplier_id: int, 
     db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
 
     supplier = supplier_cruds.get_supplier_by_id(db, supplier_id)
     return templates.TemplateResponse("update_supplier.html", {
@@ -241,11 +383,26 @@ async def add_supplier_submit(
 
 @app.get("/sales", response_class=HTMLResponse)
 async def sales_list(request: Request, db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     sales_data = sale_cruds.get_all_sales(db)
     return templates.TemplateResponse("sales.html", {"request": request, "sales": sales_data})
 
 @app.get("/sales/new", response_class=HTMLResponse)
 async def new_sale_form(request: Request, db: Session = Depends(get_db)):
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     products = product_cruds.get_all_products(db)
     return templates.TemplateResponse("add_sale.html", {"request": request, "products": products})
 
@@ -264,6 +421,13 @@ async def edit_product_form(
     request: Request,
     product_id: int, 
     db: Session = Depends(get_db)):
+
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
 
     product = product_cruds.get_product_by_id(db, product_id)
     suppliers_list = supplier_cruds.get_all_suppliers(db)
@@ -315,6 +479,14 @@ async def product_list(
     category: Optional[str] = None, 
     db: Session = Depends(get_db)
 ):
+    
+    if not check_session(request):
+        # If session is invalid or expired, redirect to login with an error
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Session expired. Please login again."
+        })
+    
     # Call the filtered function
     products_db = product_cruds.get_products_filtered(db, search, category)
     
@@ -342,3 +514,5 @@ async def product_list(
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "message": "Service is healthy"}
+
+    

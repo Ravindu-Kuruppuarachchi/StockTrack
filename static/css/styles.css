@@ -1,9 +1,9 @@
+
+/* 1. BASE & LAYOUT */
 body {
-    background-color: #f4f6f9; /* Soft gray-blue background */
+    background-color: #f4f6f9;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #333;
-    
-    /* Layout Flexbox */
     display: flex; 
     min-height: 100vh; 
     flex-direction: column;
@@ -14,43 +14,153 @@ body {
     display: flex; 
     flex: 1; 
     width: 100%; 
+    background: rgba(255, 255, 255, 0.02);
 }
 
+
 #sidebar { 
-    min-width: 250px; 
-    max-width: 250px; 
-    background: #343a40; 
+    min-width: 280px; 
+    max-width: 280px; 
+    background: linear-gradient(180deg, #1a202c 0%, #2d3748 100%);
     color: #fff; 
-    transition: all 0.3s;
-    min-height: 100vh; 
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+
+
+.sidebar-header {
+    padding: 1.5rem 1.25rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    position: relative;
+    z-index: 1;
+}
+
+.sidebar-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #667eea 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+#sidebar .components {
+    padding-top: 2rem !important;
 }
 
 #sidebar .nav-link { 
-    color: rgba(255,255,255,.8); 
-    padding: 10px 20px; 
-    border-radius: 4px; 
-    margin-bottom: 5px; 
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0.875rem 1.25rem;
+    border-radius: 12px;
+    margin: 0 1rem 0.5rem 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+#sidebar .nav-link i {
+    width: 24px;
+    text-align: center;
+    transition: transform 0.3s ease;
 }
 
 #sidebar .nav-link:hover { 
-    color: #fff; 
-    background: rgba(255,255,255,.1); 
+    color: #fff;
+    background: rgba(102, 126, 234, 0.15);
+    transform: translateX(4px);
+}
+
+#sidebar .nav-link:hover i {
+    transform: scale(1.1);
 }
 
 #sidebar .nav-link.active { 
-    background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
-    color: white; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    transform: translateX(4px);
+}
+#sidebar .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 70%;
+    background: white;
+    border-radius: 0 4px 4px 0;
 }
 
+
+/* MAIN CONTENT */
 main { 
     width: 100%; 
     padding: 30px; 
     background-color: #f4f6f9; 
 }
 
+/* ENHANCED TOP NAVBAR */
+.navbar {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 16px !important;
+    padding: 1rem 1.5rem !important;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
 
-/* Cards */
+.navbar-brand, .navbar .nav-link {
+    font-weight: 600;
+}
+
+.navbar .text-light {
+    color: #2d3748 !important;
+    font-size: 0.95rem;
+}
+
+.navbar .btn-outline-light {
+    border: 2px solid #667eea;
+    color: #667eea;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.navbar .btn-outline-light:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.navbar .btn-danger {
+    background: linear-gradient(135deg, #c03535 0%, #c53030 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.navbar .btn-danger:hover {
+    background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
+}
+
+/* 5. CARDS*/
 .card {
     border: none;
     border-radius: 12px;
@@ -64,26 +174,11 @@ main {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Navbar (Top) */
-.navbar {
-    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* 6. TABLES */
+.table { 
+    margin-bottom: 0; 
 }
 
-.navbar-brand, .nav-link {
-    color: white !important; /* Forces top navbar text white */
-    font-weight: 500;
-}
-
-#sidebar .nav-link {
-    color: rgba(255,255,255,.8) !important;
-}
-#sidebar .nav-link:hover, #sidebar .nav-link.active {
-    color: #fff !important;
-}
-
-/* Tables */
-.table { margin-bottom: 0; }
 .table thead th {
     background-color: #f8f9fa;
     color: #495057;
@@ -92,36 +187,42 @@ main {
     font-size: 0.85rem;
     border-bottom: 2px solid #dee2e6;
 }
-.table-hover tbody tr:hover { background-color: #f1f3f5; }
 
-/* Buttons */
+.table-hover tbody tr:hover { 
+    background-color: #f1f3f5; 
+}
+
+/* 7. BUTTONS */
 .btn-primary {
     background: linear-gradient(135deg, #4182e3 0%, #0056b3 100%);
     border: none;
     box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
 }
+
 .btn-primary:hover {
     background: linear-gradient(135deg, #3375d6 0%, #004494 100%);
     transform: translateY(-1px);
 }
+
 .btn-success {
     background: linear-gradient(135deg, #1fb16d 0%, #0c6a3e 100%);
     border: none;
     box-shadow: 0 2px 4px rgba(25, 135, 84, 0.3);
 }
 
-/* Forms */
+/* 8. FORMS */
 .form-control, .form-select {
     border-radius: 8px;
     border: 1px solid #ced4da;
     padding: 10px 15px;
 }
+
 .form-control:focus, .form-select:focus {
     box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
     border-color: #86b7fe;
 }
 
-/* Badges */
+/* 9. BADGES */
 .badge {
     padding: 0.5em 0.8em;
     border-radius: 6px;
@@ -129,10 +230,10 @@ main {
     letter-spacing: 0.5px;
 }
 
-/* 5. RESPONSIVENESS */
+/* 10. RESPONSIVENESS */
 @media (max-width: 768px) {
     #sidebar {
-        margin-left: -250px;
+        margin-left: -280px;
     }
     #sidebar.active {
         margin-left: 0;

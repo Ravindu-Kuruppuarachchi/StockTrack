@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validatePassword() {
         const passwordValue = passwordInput.value;
-        if (passwordValue.length <= 8) {
+        if (passwordValue.length < 8) {
             passwordInput.classList.add('is-invalid');
             passwordInput.classList.remove('is-valid');
             return false;
