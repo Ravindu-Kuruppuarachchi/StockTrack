@@ -20,7 +20,7 @@ services:
 
   api:
     build: .
-    image: inventory_project_api:latest
+    image: inventory_project_api:multistage
     container_name: inventory_api
     ports:
       - "8000:8000"

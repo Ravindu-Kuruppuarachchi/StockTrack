@@ -1,9 +1,10 @@
+import os
 from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from fastapi import Depends
-from database import get_db
+from database import SessionLocal, get_db
 from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
 from starlette.middleware.sessions import SessionMiddleware
 from typing import Optional
@@ -11,12 +12,57 @@ from fastapi.staticfiles import StaticFiles
 from hashing import Hash
 import time
 from database import engine
+from contextlib import asynccontextmanager
+from dotenv import load_dotenv  # <--- 1. ADD THIS IMPORT
 
 import models 
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Inventory Management System")
+
+# Password & Admin Seeder Setup
+load_dotenv()
+def create_initial_admin():
+    db = SessionLocal()
+    try:
+        admin_email = os.getenv("ADMIN_EMAIL")
+        admin_pass = os.getenv("ADMIN_PASSWORD")
+        
+        if not admin_email or not admin_pass:
+            print(" No ADMIN_EMAIL or ADMIN_PASSWORD found in .env. Skipping seeding.")
+            return
+
+        # Check if user already exists
+        existing_user = db.query(models.User).filter(models.User.email == admin_email).first()
+        
+        if existing_user:
+            print(f" Admin user {admin_email} already exists.")
+        else:
+            print(f" Creating initial admin user: {admin_email}")
+            hashed_password = Hash.bcrypt(admin_pass)
+            
+            new_admin = models.User(
+                email=admin_email,
+                password=hashed_password
+            )
+            db.add(new_admin)
+            db.commit()
+            print(" Admin created successfully!")
+            
+    except Exception as e:
+        print(f"Error creating initial admin: {e}")
+    finally:
+        db.close()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup 
+    print("Application Starting Up")
+    create_initial_admin()
+    yield
+    print("Application Shutting Down")
+
+app = FastAPI(title="Inventory Management System", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static") 
 templates = Jinja2Templates(directory="templates")
 
@@ -25,6 +71,15 @@ app.add_middleware(
     secret_key="your-secret-key123", 
     max_age=3600 
 )
+
+@app.middleware("http")
+async def add_no_cache_header(request: Request, call_next):
+    response = await call_next(request)
+    # These headers tell the browser: "Stop! Do not save this page."
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 def check_session(request: Request):
     user_email = request.session.get("user_email")
@@ -39,7 +94,6 @@ def check_session(request: Request):
     if current_time - login_time > 3600:
         request.session.clear() # Clear expired session
         return False
-
     return True
 
 @app.get("/")
@@ -74,8 +128,9 @@ async def login_submit(
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
-    return RedirectResponse(url="/login", status_code=303)
+    response = RedirectResponse(url="/login", status_code=303)
     response.delete_cookie("session")
+    return response
 
 @app.get("/login/update", response_class=HTMLResponse)
 async def update_login(
@@ -459,3 +514,5 @@ async def product_list(
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "message": "Service is healthy"}
+
+    
