@@ -13,7 +13,7 @@ from hashing import Hash
 import time
 from database import engine
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv  # <--- 1. ADD THIS IMPORT
+from dotenv import load_dotenv  
 
 import models 
 

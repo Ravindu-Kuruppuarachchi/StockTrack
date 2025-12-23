@@ -17,6 +17,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - inventory_net
 
   api:
     build: .
@@ -31,11 +33,14 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-
-
+    networks:
+      - inventory_net
 
 volumes:
   db_data:
 
+networks:
+  inventory_net:
+    driver: bridge
 
 
