@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  postgres-user: "postgres"
+  postgres-db: "inventory_db"
+  # Note the change: 'postgres-service' will be the name of our Service later
+  database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
