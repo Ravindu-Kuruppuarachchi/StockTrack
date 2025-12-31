@@ -35,24 +35,15 @@ spec:
               name: app-config
               key: postgres-db
         volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-  volumeClaimTemplates:
+        - name: postgres-storage   # Must match the template name above
+          mountPath: /var/lib/postgresql/data # Postgres data directory
+  volumeClaimTemplates: 
   - metadata:
-      name: postgres-storage
+      name: postgres-storage  #The name of the claim
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes: [ "ReadWriteOnce" ] #can be mounted as read-write by a single node
       resources:
         requests:
-          storage: 1Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-service
-spec:
-  ports:
-  - port: 5432
-  selector:
-    app: postgres
-  clusterIP: None  # Headless service for StatefulSet
+          storage: 1Gi #request a storage of 1GB
+
+ 

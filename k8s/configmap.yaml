@@ -5,5 +5,8 @@ metadata:
 data:
   postgres-user: "postgres"
   postgres-db: "inventory_db"
+  admin-email: "admin@airarabia.com"
   # Note the change: 'postgres-service' will be the name of our Service later
   database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+
+
