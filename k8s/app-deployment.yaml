@@ -1,0 +1,59 @@
+apiVersion: apps/v1 # Specifies version of K8s API schema to use
+kind: Deployment # Specifies that we are creating a Deployment
+metadata:
+  name: inventory-app # Name of the Deployment
+spec:
+  replicas: 1 # Number of pod replicas to run
+  selector: # rules for finding pods managed by this Deployment
+    matchLabels:
+      app: inventory-app # look fro pods with this label
+  template:
+    metadata:
+      labels:
+        app: inventory-app #This label must match the selector above
+    spec:
+      containers:
+      - name: inventory-app
+        image: inventory_project_api:multistage  # LOCAL IMAGE
+        imagePullPolicy: Never  # <--- IMPORTANT: Tells K8s to use local image
+        ports:
+        - containerPort: 8000  #Tells Kubernetes your app listens on port 8000.
+        env: #list of environment variables for the container. This allows you to change the Env variables without rewriting the Deployment YAML.
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config #get the value form the ConfigMap file to look in.
+              key: database-url
+        - name: ADMIN_EMAIL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: admin-email #get the value form the ConfigMap file to look in.
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: admin-password #get the value form the secret file to look in.
+
+        resources:           # limit resource usage
+          requests:
+            cpu: "100m"      # Starts with 0.1 CPU core
+            memory: "128Mi"
+          limits:
+            cpu: "500m"      # Capped at 0.5 CPU core
+            memory: "256Mi"      
+              
+        # Add this under the 'containers' section
+        livenessProbe:  # If app freezes, deadlocks, or crashes internally but the process ID still exists. This probe detects that and kills the container so a fresh one can start.
+          httpGet:
+            path: /health # Endpoint to check container health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+
+        readinessProbe:  # If app is overloaded and cannot handle requests, this probe detects that and removes the pod from service endpoints until it is ready again.
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10

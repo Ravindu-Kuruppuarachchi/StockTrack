@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-statefulset
+spec:
+  serviceName: "postgres-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: postgres-db
+        volumeMounts:
+        - name: postgres-storage   # Must match the template name above
+          mountPath: /var/lib/postgresql/data # Postgres data directory
+  volumeClaimTemplates: 
+  - metadata:
+      name: postgres-storage  #The name of the claim
+    spec:
+      accessModes: [ "ReadWriteOnce" ] #can be mounted as read-write by a single node
+      resources:
+        requests:
+          storage: 1Gi #request a storage of 1GB
+
+ 
