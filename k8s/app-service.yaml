@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: inventory-service
 spec:
-  type: NodePort
+  type: NodePort # Expose the service on each Node's IP at a static port (the NodePort)
   selector:
     app: inventory-app
   ports:
     - port: 8000        # The port the service listens on inside the cluster
       targetPort: 8000  # The port your container is running on
-      nodePort: 30007   # The port you will access in your browser (http://minikube-ip:30007)
+      nodePort: 30007   # The port you will access in your browser (http://minikube-ip(node):30007)

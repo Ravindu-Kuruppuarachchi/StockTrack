@@ -10,3 +10,5 @@ spec:
   minReplicas: 1 # Minimum number of pod replicas
   maxReplicas: 10 # Maximum number of pod replicas
   targetCPUUtilizationPercentage: 50  # Target average CPU utilization percentage across all pods
+
+  #50-70 reange is given normly. If we set a large value and a sudden spike happens, the HPA will take time to react and scale up. therefore it will go beyond 100% if initial value is too large
