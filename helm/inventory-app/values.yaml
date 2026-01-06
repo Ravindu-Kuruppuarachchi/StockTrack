@@ -1,0 +1,110 @@
+# Default values for inventory-app
+# This is a YAML-formatted file.
+# Matches k8s/ folder configuration
+
+# Application settings
+app:
+  name: inventory-app
+  replicaCount: 1
+
+# Container image configuration
+image:
+  repository: inventory_project_api
+  tag: "multistage"
+  pullPolicy: Never  # Use local image (for minikube)
+
+# Image pull secrets (if using private registry)
+imagePullSecrets: []
+
+# Service account configuration
+serviceAccount:
+  create: false
+  name: ""
+  annotations: {}
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod security context
+podSecurityContext: {}
+
+# Container security context
+securityContext: {}
+
+# Service configuration (matches k8s/app-service.yaml)
+service:
+  type: NodePort
+  port: 8000
+  targetPort: 8000
+  nodePort: 30007
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: inventory.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Resource limits and requests (matches k8s/app-deployment.yaml)
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Autoscaling configuration (matches k8s/hpa.yaml)
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity rules
+affinity: {}
+
+# ConfigMap data (matches k8s/configmap.yaml)
+configMap:
+  postgresUser: "postgres"
+  postgresDb: "inventory_db"
+  adminEmail: "admin@airarabia.com"
+  databaseUrl: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+
+# Secrets (matches k8s/secret.yaml)
+secrets:
+  postgresPassword: "airarabia"
+  adminPassword: "SecretAdminPassword123!"
+
+# PostgreSQL StatefulSet configuration (matches k8s/db_deployment.yaml)
+postgresql:
+  enabled: true
+  image: "postgres:15"
+  replicas: 1
+  storage:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
+# Health checks (matches k8s/app-deployment.yaml)
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 10

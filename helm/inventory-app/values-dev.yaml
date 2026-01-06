@@ -1,0 +1,64 @@
+# Development environment values
+# Usage: helm install inventory-dev ./helm/inventory-app -f ./helm/inventory-app/values-dev.yaml
+
+app:
+  name: inventory-app
+  replicaCount: 1
+
+image:
+  repository: inventory_project_api
+  tag: "multistage"
+  pullPolicy: Never  # Use local image
+
+service:
+  type: NodePort
+  port: 8000
+  targetPort: 8000
+  nodePort: 30007
+
+# Minimal resources for development
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Disable autoscaling in dev
+autoscaling:
+  enabled: false
+
+# Development ConfigMap
+configMap:
+  postgresUser: "postgres"
+  postgresDb: "inventory_dev"
+  adminEmail: "admin@dev.local"
+  databaseUrl: "postgresql://postgres:devpassword@postgres-service:5432/inventory_dev"
+
+# Development secrets
+secrets:
+  postgresPassword: "devpassword"
+  adminPassword: "DevPassword123!"
+
+# PostgreSQL for development
+postgresql:
+  enabled: true
+  image: "postgres:15"
+  replicas: 1
+  storage:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
+# Relaxed health checks for development
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 30
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 15
