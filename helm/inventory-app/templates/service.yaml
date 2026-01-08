@@ -1,0 +1,27 @@
+{{- range $key, $svc := .Values.myServices }}
+{{- if $svc.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $svc.name }}
+  labels:
+    # Use global labels from root context
+    {{- toYaml $.Values.labels | nindent 4 }}
+    helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+spec:
+  type: {{ $svc.type }}
+  {{- if $svc.headless }}
+  clusterIP: None
+  {{- end }}
+  selector:
+    {{- toYaml $svc.selector | nindent 4 }}
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.targetPort | default $svc.port }}
+      {{- if $svc.nodePort }}
+      nodePort: {{ $svc.nodePort }}
+      {{- end }}
+{{- end }}
+{{- end }}

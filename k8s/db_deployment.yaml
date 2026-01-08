@@ -42,6 +42,7 @@ spec:
       name: postgres-storage  #The name of the claim
     spec:
       accessModes: [ "ReadWriteOnce" ] #can be mounted as read-write by a single node
+      #can add storage classes
       resources:
         requests:
           storage: 1Gi #request a storage of 1GB

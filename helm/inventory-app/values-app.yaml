@@ -1,0 +1,87 @@
+# --- GLOBAL SETTINGS ---
+fullname: inventory-app
+
+postgresql:
+  enabled: false
+
+common:
+  enabled: false  # Do NOT create ConfigMaps/Secrets (DB release already created them)
+
+
+labels:
+  app: inventory-app
+  tier: backend
+  owner: "devops-team"
+selectorLabels:
+  app: inventory-app
+  tier: backend
+
+# --- APPLICATION CONFIGURATION ---
+app:
+  enabled: true
+  replicaCount: 1
+  containerPort: 8000
+
+image:
+  repository: inventory_project_api
+  tag: "multistage"
+  pullPolicy: Never
+
+# --- SERVICES (Map Format) ---
+myServices:
+  # Disable postgres service for App release
+  postgres:
+    enabled: false
+
+  backend:
+    name: inventory-service
+    enabled: true
+    type: NodePort
+    nodePort: 30007
+    port: 8000
+    targetPort: 8000
+    selector:
+      app: inventory-app
+      tier: backend
+
+# --- APP CONFIG & SECRETS ---
+configMap:
+  adminEmail: "admin@airarabia.com"
+  # Connection string pointing to the DB service defined in values-db.yaml
+  databaseUrl: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+
+secrets:
+  adminPassword: "SecretAdminPassword123!"
+
+# --- ADDITIONAL APP RESOURCES ---
+serviceAccount:
+  create: true
+  name: "inventory-sa"
+  annotations: {}
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+
+
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

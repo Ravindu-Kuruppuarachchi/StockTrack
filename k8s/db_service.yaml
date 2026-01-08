@@ -4,7 +4,7 @@ metadata:
   name: postgres-service
 spec:
   ports:
-  - port: 5432
+  - port: 5432      # The port the service listens on inside the cluster
   selector:
     app: postgres
   clusterIP: None  # Headless service for StatefulSet

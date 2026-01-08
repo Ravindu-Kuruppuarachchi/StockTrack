@@ -1,0 +1,15 @@
+{{- if .Values.common.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # Replaced helper with direct value
+  name: {{ .Values.fullname }}-config
+  labels:
+    # Replaced helper with toYaml
+    {{- toYaml .Values.labels | nindent 4 }}
+data:
+  postgres-user: {{ .Values.configMap.postgresUser | quote }}
+  postgres-db: {{ .Values.configMap.postgresDb | quote }}
+  admin-email: {{ .Values.configMap.adminEmail | quote }}
+  database-url: {{ .Values.configMap.databaseUrl | quote }}
+{{- end -}}

@@ -1,0 +1,57 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-statefulset
+  labels:
+    # 1. Replaced helper with global labels from values
+    {{- toYaml .Values.labels | nindent 4 }}
+spec:
+  # CRITICAL: This name must exactly match the headless service name in your 'myServices' list
+  serviceName: "postgres-service"
+  replicas: {{ .Values.postgresql.replicas }}
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        # You can add global labels here if you want consistency, but 'app: postgres' is the critical one
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.postgresql.image }}
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              # 2. Replaced helper with .Values.fullname
+              name: {{ .Values.fullname }}-config
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              # 3. Replaced helper with .Values.fullname
+              name: {{ .Values.fullname }}-secret
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              # 4. Replaced helper with .Values.fullname
+              name: {{ .Values.fullname }}-config
+              key: postgres-db
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: [ {{ .Values.postgresql.storage.accessMode | quote }} ]
+      resources:
+        requests:
+          storage: {{ .Values.postgresql.storage.size }}
+{{- end }}

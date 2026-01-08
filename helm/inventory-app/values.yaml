@@ -1,0 +1,120 @@
+# --- GLOBAL SETTINGS ---
+fullname: inventory-app
+
+# Labels to apply to all resources
+labels:
+  app: inventory-app
+  tier: backend
+  owner: "devops-team"
+
+# Selector labels (Must match 'labels' for Deployment/Service selectors)
+selectorLabels:
+  app: inventory-app
+  tier: backend
+
+# --- APPLICATION CONFIGURATION ---
+app:
+  enabled: true  
+  replicaCount: 1  # Default to 1 for safety/testing
+  containerPort: 8000
+
+image:
+  repository: inventory_project_api
+  tag: "multistage"
+  pullPolicy: Never  # Assumes local Minikube image
+
+imagePullSecrets: []
+
+# --- SERVICE ACCOUNT ---
+serviceAccount:
+  create: true
+  name: "inventory-sa"
+  annotations: {}
+
+# --- SERVICES (Map Format) ---
+# We switched to a Map format so specific values files can override 
+# specific services without deleting others.
+myServices:
+  backend:
+    name: inventory-service
+    enabled: true
+    type: NodePort
+    nodePort: 30007
+    port: 8000
+    targetPort: 8000
+    selector:
+      app: inventory-app
+      tier: backend
+
+  postgres:
+    name: postgres-service
+    enabled: true
+    type: ClusterIP
+    headless: true
+    port: 5432
+    selector:
+      app: postgres
+
+# --- CONFIG & SECRETS ---
+configMap:
+  postgresUser: "postgres"
+  postgresDb: "inventory_db"
+  adminEmail: "admin@airarabia.com"
+  # Default internal connection URL
+  databaseUrl: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+
+secrets:
+  postgresPassword: "airarabia"
+  adminPassword: "SecretAdminPassword123!"
+
+# --- DATABASE CONFIGURATION ---
+postgresql:
+  enabled: true
+  image: "postgres:15"
+  replicas: 1
+  storage:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
+# --- OTHER RESOURCES ---
+
+autoscaling:
+  enabled: false  # Disabled by default for simpler testing
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
+
+# Resource limits (Conservative defaults)
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+
+# Enable Shared Resources (ConfigMap, Secret, ServiceAccount)
+common:
+  enabled: true
+
+
+# Security & Scheduling
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
