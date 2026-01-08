@@ -1,16 +1,20 @@
+{{- if .Values.app.enabled -}}  
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "inventory-app.fullname" . }}
+  # 1. Replaced helper with direct value
+  name: {{ .Values.fullname  }}
   labels:
-    {{- include "inventory-app.labels" . | nindent 4 }}
+    # 2. Replaced helper with toYaml from values
+    {{- toYaml .Values.labels | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.app.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "inventory-app.selectorLabels" . | nindent 6 }}
+      # 3. Replaced helper with selectorLabels from values
+      {{- toYaml .Values.selectorLabels | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,15 +22,17 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "inventory-app.selectorLabels" . | nindent 8 }}
+        # 4. Use selectorLabels here so pods match the deployment selector
+        {{- toYaml .Values.selectorLabels | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ include "inventory-app.serviceAccountName" . }}
-      {{- end }}
+      
+      # 5. simplified service account logic
+      serviceAccountName: {{ .Values.serviceAccount.name | default "default" }}
+      
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -41,29 +47,32 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.targetPort }}
+              containerPort: {{ .Values.app.containerPort }}
               protocol: TCP
           env:
+            # 6. Updated ConfigMap/Secret names to use .Values.fullname
             - name: DATABASE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "inventory-app.fullname" . }}-config
+                  name: {{ .Values.fullname }}-config
                   key: database-url
             - name: ADMIN_EMAIL
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "inventory-app.fullname" . }}-config
+                  name: {{ .Values.fullname }}-config
                   key: admin-email
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "inventory-app.fullname" . }}-secret
+                  name: {{ .Values.fullname }}-secret
                   key: admin-password
+          
+          # ... (Probes and Resources remain the same) ...
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
               path: {{ .Values.livenessProbe.path }}
-              port: {{ .Values.service.targetPort }}
+              port: {{ .Values.app.containerPort }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
           {{- end }}
@@ -71,7 +80,7 @@ spec:
           readinessProbe:
             httpGet:
               path: {{ .Values.readinessProbe.path }}
-              port: {{ .Values.service.targetPort }}
+              port: {{ .Values.app.containerPort }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
           {{- end }}
@@ -91,3 +100,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end -}}

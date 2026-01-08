@@ -1,93 +1,73 @@
-# Default values for inventory-app
-# This is a YAML-formatted file.
-# Matches k8s/ folder configuration
+# --- GLOBAL SETTINGS ---
+fullname: inventory-app
 
-# Application settings
+# Labels to apply to all resources
+labels:
+  app: inventory-app
+  tier: backend
+  owner: "devops-team"
+
+# Selector labels (Must match 'labels' for Deployment/Service selectors)
+selectorLabels:
+  app: inventory-app
+  tier: backend
+
+# --- APPLICATION CONFIGURATION ---
 app:
-  name: inventory-app
-  replicaCount: 1
+  enabled: true  
+  replicaCount: 1  # Default to 1 for safety/testing
+  containerPort: 8000
 
-# Container image configuration
 image:
   repository: inventory_project_api
   tag: "multistage"
-  pullPolicy: Never  # Use local image (for minikube)
+  pullPolicy: Never  # Assumes local Minikube image
 
-# Image pull secrets (if using private registry)
 imagePullSecrets: []
 
-# Service account configuration
+# --- SERVICE ACCOUNT ---
 serviceAccount:
-  create: false
-  name: ""
+  create: true
+  name: "inventory-sa"
   annotations: {}
 
-# Pod annotations
-podAnnotations: {}
+# --- SERVICES (Map Format) ---
+# We switched to a Map format so specific values files can override 
+# specific services without deleting others.
+myServices:
+  backend:
+    name: inventory-service
+    enabled: true
+    type: NodePort
+    nodePort: 30007
+    port: 8000
+    targetPort: 8000
+    selector:
+      app: inventory-app
+      tier: backend
 
-# Pod security context
-podSecurityContext: {}
+  postgres:
+    name: postgres-service
+    enabled: true
+    type: ClusterIP
+    headless: true
+    port: 5432
+    selector:
+      app: postgres
 
-# Container security context
-securityContext: {}
-
-# Service configuration (matches k8s/app-service.yaml)
-service:
-  type: NodePort
-  port: 8000
-  targetPort: 8000
-  nodePort: 30007
-
-# Ingress configuration
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: inventory.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
-
-# Resource limits and requests (matches k8s/app-deployment.yaml)
-resources:
-  limits:
-    cpu: 500m
-    memory: 256Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-
-# Autoscaling configuration (matches k8s/hpa.yaml)
-autoscaling:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 50
-
-# Node selector
-nodeSelector: {}
-
-# Tolerations
-tolerations: []
-
-# Affinity rules
-affinity: {}
-
-# ConfigMap data (matches k8s/configmap.yaml)
+# --- CONFIG & SECRETS ---
 configMap:
   postgresUser: "postgres"
   postgresDb: "inventory_db"
   adminEmail: "admin@airarabia.com"
+  # Default internal connection URL
   databaseUrl: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
 
-# Secrets (matches k8s/secret.yaml)
 secrets:
   postgresPassword: "airarabia"
   adminPassword: "SecretAdminPassword123!"
 
-# PostgreSQL StatefulSet configuration (matches k8s/db_deployment.yaml)
+# --- DATABASE CONFIGURATION ---
 postgresql:
   enabled: true
   image: "postgres:15"
@@ -96,7 +76,23 @@ postgresql:
     size: 1Gi
     accessMode: ReadWriteOnce
 
-# Health checks (matches k8s/app-deployment.yaml)
+# --- OTHER RESOURCES ---
+
+autoscaling:
+  enabled: false  # Disabled by default for simpler testing
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
+
+# Resource limits (Conservative defaults)
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
 livenessProbe:
   enabled: true
   path: /health
@@ -108,3 +104,17 @@ readinessProbe:
   path: /health
   initialDelaySeconds: 5
   periodSeconds: 10
+
+
+# Enable Shared Resources (ConfigMap, Secret, ServiceAccount)
+common:
+  enabled: true
+
+
+# Security & Scheduling
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

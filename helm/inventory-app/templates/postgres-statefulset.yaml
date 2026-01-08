@@ -4,8 +4,10 @@ kind: StatefulSet
 metadata:
   name: postgres-statefulset
   labels:
-    {{- include "inventory-app.labels" . | nindent 4 }}
+    # 1. Replaced helper with global labels from values
+    {{- toYaml .Values.labels | nindent 4 }}
 spec:
+  # CRITICAL: This name must exactly match the headless service name in your 'myServices' list
   serviceName: "postgres-service"
   replicas: {{ .Values.postgresql.replicas }}
   selector:
@@ -15,6 +17,7 @@ spec:
     metadata:
       labels:
         app: postgres
+        # You can add global labels here if you want consistency, but 'app: postgres' is the critical one
     spec:
       containers:
       - name: postgres
@@ -25,17 +28,20 @@ spec:
         - name: POSTGRES_USER
           valueFrom:
             configMapKeyRef:
-              name: {{ include "inventory-app.fullname" . }}-config
+              # 2. Replaced helper with .Values.fullname
+              name: {{ .Values.fullname }}-config
               key: postgres-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ include "inventory-app.fullname" . }}-secret
+              # 3. Replaced helper with .Values.fullname
+              name: {{ .Values.fullname }}-secret
               key: postgres-password
         - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
-              name: {{ include "inventory-app.fullname" . }}-config
+              # 4. Replaced helper with .Values.fullname
+              name: {{ .Values.fullname }}-config
               key: postgres-db
         volumeMounts:
         - name: postgres-storage

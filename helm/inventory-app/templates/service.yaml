@@ -1,18 +1,27 @@
+{{- range $key, $svc := .Values.myServices }}
+{{- if $svc.enabled }}
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: inventory-service
+  name: {{ $svc.name }}
   labels:
-    {{- include "inventory-app.labels" . | nindent 4 }}
+    # Use global labels from root context
+    {{- toYaml $.Values.labels | nindent 4 }}
+    helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ $svc.type }}
+  {{- if $svc.headless }}
+  clusterIP: None
+  {{- end }}
   selector:
-    {{- include "inventory-app.selectorLabels" . | nindent 4 }}
+    {{- toYaml $svc.selector | nindent 4 }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPort }}
-      {{- if and (eq .Values.service.type "NodePort") .Values.service.nodePort }}
-      nodePort: {{ .Values.service.nodePort }}
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.targetPort | default $svc.port }}
+      {{- if $svc.nodePort }}
+      nodePort: {{ $svc.nodePort }}
       {{- end }}
-      protocol: TCP
-      name: http
+{{- end }}
+{{- end }}

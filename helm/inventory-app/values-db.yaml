@@ -1,0 +1,49 @@
+# --- GLOBAL SETTINGS ---
+fullname: inventory-app
+
+app:
+  enabled: false
+
+common:
+  enabled: true
+
+serviceAccount:
+  create: false
+
+labels:
+  app: inventory-app
+  tier: backend
+  owner: "devops-team"
+
+# --- DATABASE CONFIGURATION ---
+postgresql:
+  enabled: true
+  image: "postgres:15"
+  replicas: 1
+  storage:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
+# --- SERVICES (Map Format) ---
+myServices:
+  # Disable backend service for DB release
+  backend:
+    enabled: false
+
+  postgres:
+    name: postgres-service
+    enabled: true
+    type: ClusterIP
+    headless: true
+    port: 5432
+    selector:
+      app: postgres
+
+# --- SECRETS & CONFIG (DB Parts) ---
+configMap:
+  postgresUser: "postgres"
+  postgresDb: "inventory_db"
+  # Note: Admin parts are in values-app.yaml, but Helm merges them safely
+
+secrets:
+  postgresPassword: "airarabia"
