@@ -8,8 +8,6 @@ metadata:
   labels:
     # Use global labels from root context
     {{- toYaml $.Values.labels | nindent 4 }}
-    helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
-    app.kubernetes.io/managed-by: {{ $.Release.Service }}
 spec:
   type: {{ $svc.type }}
   {{- if $svc.headless }}

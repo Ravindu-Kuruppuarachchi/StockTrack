@@ -20,7 +20,7 @@ selectorLabels:
 app:
   enabled: true
   replicaCount: 1
-  containerPort: 8000
+  containerPort: 8000  ## CANNOT EDIT
 
 image:
   repository: inventory_project_api
@@ -38,17 +38,26 @@ myServices:
     enabled: true
     type: NodePort
     nodePort: 30007
-    port: 8000
-    targetPort: 8000
+    port: 8000  # EDITABLE: This is the internal Service IP port
+    targetPort: 8000 # CANNOT EDIT: Must match 'app.containerPort' above
     selector:
       app: inventory-app
       tier: backend
 
 # --- APP CONFIG & SECRETS ---
-configMap:
-  adminEmail: "admin@airarabia.com"
-  # Connection string pointing to the DB service defined in values-db.yaml
-  databaseUrl: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+myConfigMaps:
+  # Enable App Config
+  app:
+    enabled: true
+    suffix: "app-config"
+    data:
+      admin-email: "admin@airarabia.com"
+      database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+
+  # Disable DB Config
+  db:
+    enabled: false
+
 
 secrets:
   adminPassword: "SecretAdminPassword123!"
@@ -60,7 +69,7 @@ serviceAccount:
   annotations: {}
 
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
   maxReplicas: 10
   targetCPUUtilizationPercentage: 50

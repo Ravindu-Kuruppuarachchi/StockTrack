@@ -20,6 +20,8 @@ postgresql:
   enabled: true
   image: "postgres:15"
   replicas: 1
+  containerName: "postgres"
+  mountPath: "/var/lib/postgresql/data"
   storage:
     size: 1Gi
     accessMode: ReadWriteOnce
@@ -35,15 +37,26 @@ myServices:
     enabled: true
     type: ClusterIP
     headless: true
-    port: 5432
+    port: 5432  # cannot edit 
+    targetPort: 5432
     selector:
       app: postgres
 
 # --- SECRETS & CONFIG (DB Parts) ---
-configMap:
-  postgresUser: "postgres"
-  postgresDb: "inventory_db"
-  # Note: Admin parts are in values-app.yaml, but Helm merges them safely
+
+myConfigMaps:
+  # Enable DB Config
+  db:
+    enabled: true
+    suffix: "db-config"
+    data:
+      postgres-user: "postgres"
+      postgres-db: "inventory_db"
+  
+  # Disable App Config
+  app:
+    enabled: false
+
 
 secrets:
   postgresPassword: "airarabia"

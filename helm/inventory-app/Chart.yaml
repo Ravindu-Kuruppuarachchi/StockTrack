@@ -11,21 +11,4 @@ version: 1.0.0
 # Application version - the version of the app being deployed
 appVersion: "1.0.0"
 
-# Keywords for searching
-keywords:
-  - inventory
-  - fastapi
-  - postgresql
-  - python
 
-# Maintainer information
-maintainers:
-  - name: Ravindu Kuruppuarachchi
-    email: ravindu@example.com
-
-# Home page of the project
-home: https://github.com/Ravindu-Kuruppuarachchi/StockTrack
-
-# Source code location
-sources:
-  - https://github.com/Ravindu-Kuruppuarachchi/StockTrack

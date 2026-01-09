@@ -1,15 +1,17 @@
-{{- if .Values.common.enabled -}}
+{{- range $key, $config := .Values.myConfigMaps }}
+{{- if $config.enabled }}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  # Replaced helper with direct value
-  name: {{ .Values.fullname }}-config
+  # Name is constructed dynamically (e.g., inventory-app-db-config)
+  name: {{ $.Values.fullname }}-{{ $config.suffix }}
   labels:
-    # Replaced helper with toYaml
-    {{- toYaml .Values.labels | nindent 4 }}
+    {{- toYaml $.Values.labels | nindent 4 }}
 data:
-  postgres-user: {{ .Values.configMap.postgresUser | quote }}
-  postgres-db: {{ .Values.configMap.postgresDb | quote }}
-  admin-email: {{ .Values.configMap.adminEmail | quote }}
-  database-url: {{ .Values.configMap.databaseUrl | quote }}
-{{- end -}}
+  # Loop through the data map and quote every value automatically
+  {{- range $dataKey, $dataValue := $config.data }}
+  {{ $dataKey }}: {{ $dataValue | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

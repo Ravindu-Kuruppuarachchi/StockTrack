@@ -54,17 +54,17 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: {{ .Values.fullname }}-config
+                  name: {{ .Values.fullname }}-app-config
                   key: database-url
             - name: ADMIN_EMAIL
               valueFrom:
                 configMapKeyRef:
-                  name: {{ .Values.fullname }}-config
+                  name: {{ .Values.fullname }}-app-config
                   key: admin-email
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.fullname }}-secret
+                  name: {{ .Values.fullname }}-app-secret
                   key: admin-password
           
           # ... (Probes and Resources remain the same) ...

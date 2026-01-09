@@ -6,14 +6,14 @@ To learn more about the release, try:
   $ helm status {{ .Release.Name }}
   $ helm get all {{ .Release.Name }}
 
-{{- if .Values.ingress.enabled }}
+{{- if and .Values.ingress .Values.ingress.enabled }}
 
 The application is accessible via:
 {{- range $host := .Values.ingress.hosts }}
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}
 {{- end }}
 
-{{- else }}
+{{- else if .Values.myServices }}
 {{- /* CHANGED: Iterate over the map instead of using 'first' */ -}}
 {{- range $key, $svc := .Values.myServices }}
 {{- if and $svc.enabled (not $svc.headless) }}

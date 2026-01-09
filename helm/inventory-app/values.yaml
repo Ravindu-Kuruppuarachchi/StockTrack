@@ -56,12 +56,21 @@ myServices:
       app: postgres
 
 # --- CONFIG & SECRETS ---
-configMap:
-  postgresUser: "postgres"
-  postgresDb: "inventory_db"
-  adminEmail: "admin@airarabia.com"
-  # Default internal connection URL
-  databaseUrl: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+# --- CONFIGMAPS (Map Structure) ---
+myConfigMaps:
+  db:
+    enabled: true
+    suffix: "db-config"
+    data:
+      postgres-user: "postgres"
+      postgres-db: "inventory_db"
+
+  app:
+    enabled: true
+    suffix: "app-config"
+    data:
+      admin-email: "admin@airarabia.com"
+      database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
 
 secrets:
   postgresPassword: "airarabia"
@@ -72,6 +81,8 @@ postgresql:
   enabled: true
   image: "postgres:15"
   replicas: 1
+  containerName: "postgres"
+  mountPath: "/var/lib/postgresql/data"
   storage:
     size: 1Gi
     accessMode: ReadWriteOnce
