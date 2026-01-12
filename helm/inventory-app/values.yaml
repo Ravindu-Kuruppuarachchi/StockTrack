@@ -21,7 +21,7 @@ app:
 image:
   repository: inventory_project_api
   tag: "multistage"
-  pullPolicy: Never  # Assumes local Minikube image
+  pullPolicy: Always  # Assumes local Minikube image
 
 imagePullSecrets: []
 
