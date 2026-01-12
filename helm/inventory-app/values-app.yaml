@@ -5,7 +5,7 @@ postgresql:
   enabled: false
 
 common:
-  enabled: false  # Do NOT create ConfigMaps/Secrets (DB release already created them)
+  enabled: false  
 
 
 labels:

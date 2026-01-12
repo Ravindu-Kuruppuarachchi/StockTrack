@@ -1,25 +1,24 @@
-{{- range $key, $svc := .Values.myServices }}
-{{- if $svc.enabled }}
+{{- range $key, $svc := .Values.myServices }} # Iterate over services defined in values.yaml
+{{- if $svc.enabled }} # Only create Service if enabled is true
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ $svc.name }}
   labels:
-    # Use global labels from root context
-    {{- toYaml $.Values.labels | nindent 4 }}
+    {{- include "inventory-app.labels" $ | nindent 4 }}
 spec:
-  type: {{ $svc.type }}
+  type: {{ $svc.type }} # Service type: ClusterIP, NodePort, LoadBalancer
   {{- if $svc.headless }}
-  clusterIP: None
+  clusterIP: None  #To make the Service headless, set the clusterIP to None
   {{- end }}
   selector:
-    {{- toYaml $svc.selector | nindent 4 }}
+    {{- toYaml $svc.selector | nindent 4 }} # Indent selector map
   ports:
-    - port: {{ $svc.port }}
-      targetPort: {{ $svc.targetPort | default $svc.port }}
+    - port: {{ $svc.port }}     # The port the service listens on inside the cluster
+      targetPort: {{ $svc.targetPort | default $svc.port }} # The port, container is running on
       {{- if $svc.nodePort }}
-      nodePort: {{ $svc.nodePort }}
+      nodePort: {{ $svc.nodePort }} # The port exposed on each node (NodePort type only)
       {{- end }}
 {{- end }}
 {{- end }}

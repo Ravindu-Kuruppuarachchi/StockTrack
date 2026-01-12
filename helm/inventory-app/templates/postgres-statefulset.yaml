@@ -2,9 +2,9 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.fullname }}-statefulset
+  name: {{ include "inventory-app.fullname" . }}-statefulset
   labels:
-    {{- toYaml .Values.labels | nindent 4 }}
+    {{- include "inventory-app.labels" . | nindent 4 }}
 spec:
 
   serviceName: {{ .Values.myServices.postgres.name | quote }}
@@ -15,8 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        # Merge global labels with specific postgres selector labels
-        {{- toYaml .Values.labels | nindent 8 }}
+        {{- include "inventory-app.labels" . | nindent 8 }}
         {{- toYaml .Values.myServices.postgres.selector | nindent 8 }}
     spec:
       containers:
@@ -28,17 +27,17 @@ spec:
         - name: POSTGRES_USER #hardcoded due to software inside the container is hard-coded to look for this specific value
           valueFrom:
             configMapKeyRef:
-              name: {{ .Values.fullname }}-db-config
+              name: {{ include "inventory-app.fullname" . }}-db-config
               key: postgres-user
         - name: POSTGRES_PASSWORD #These keys represent the connection between your configmap.yaml and your statefulset.yaml.
           valueFrom:
             secretKeyRef:
-              name: {{ .Values.fullname }}-db-secret
+              name: {{ include "inventory-app.fullname" . }}-db-secret
               key: postgres-password
         - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
-              name: {{ .Values.fullname }}-db-config
+              name: {{ include "inventory-app.fullname" . }}-db-config
               key: postgres-db
                 
         volumeMounts:

@@ -1,17 +1,16 @@
-{{- range $key, $config := .Values.myConfigMaps }}
+{{- range $key, $config := .Values.myConfigMaps }} # Iterate over configMaps defined in values.yaml
 {{- if $config.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  # Name is constructed dynamically (e.g., inventory-app-db-config)
-  name: {{ $.Values.fullname }}-{{ $config.suffix }}
+  name: {{ include "inventory-app.fullname" $ }}-{{ $config.suffix }}
   labels:
-    {{- toYaml $.Values.labels | nindent 4 }}
+    {{- include "inventory-app.labels" $ | nindent 4 }}
 data:
   # Loop through the data map and quote every value automatically
-  {{- range $dataKey, $dataValue := $config.data }}
-  {{ $dataKey }}: {{ $dataValue | quote }}
+  {{- range $dataKey, $dataValue := $config.data }} # Iterate over data entries
+  {{ $dataKey }}: {{ $dataValue | quote }} # datakey: "datavalue"
   {{- end }}
 {{- end }}
 {{- end }}
