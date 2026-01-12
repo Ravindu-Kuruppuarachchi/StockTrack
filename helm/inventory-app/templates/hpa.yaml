@@ -2,16 +2,14 @@
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  # Replaced helper
-  name: {{ .Values.fullname }}-hpa
+  name: {{ include "inventory-app.fullname" . }}-hpa
   labels:
-    {{- toYaml .Values.labels | nindent 4 }}
+    {{- include "inventory-app.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    # Must match the Deployment name exactly
-    name: {{ .Values.fullname }}
+    name: {{ include "inventory-app.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   targetCPUUtilizationPercentage: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}

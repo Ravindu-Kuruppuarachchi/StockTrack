@@ -1,61 +1,46 @@
 # Inventory Management - Helm Chart
 
-This Helm chart deploys the Inventory Management application on Kubernetes.
-It matches the configuration in the `k8s/` folder.
+This Helm chart deploys the Inventory Management application on Kubernetes using a **split-release architecture** where the database and application are deployed as separate Helm releases.
 
-## What We've Done
+## Architecture Overview
 
-We created a complete Helm chart that:
-
-1. **Converted k8s/ manifests to Helm templates** - All your existing Kubernetes YAML files are now templated
-2. **Created reusable values files** - Separate configurations for dev, staging, and production
-3. **Added template helpers** - Reusable functions in `_helpers.tpl` for consistent naming
-4. **Implemented conditional logic** - Templates adapt based on values (e.g., NodePort only when specified)
-
-### Current Deployment
-
-**We are currently running `values.yaml` (default)** - NOT `values-dev.yaml`.
-
-When you run:
-```bash
-helm install inventory ./helm/inventory-app --namespace default
 ```
-Helm uses `values.yaml` by default. To use environment-specific values, you must specify the `-f` flag.
+┌─────────────────────────────────────────────────────────────────┐
+│                      inventory-ns namespace                      │
+├─────────────────────────────────┬───────────────────────────────┤
+│         db-release              │        app-release            │
+├─────────────────────────────────┼───────────────────────────────┤
+│  • postgres-statefulset         │  • inventory-app deployment   │
+│  • postgres-service (headless)  │  • inventory-service (NodePort)│
+│  • inventory-app-db-config      │  • inventory-app-app-config   │
+│  • inventory-app-db-secret      │  • inventory-app-app-secret   │
+│                                 │  • inventory-sa (ServiceAccount)│
+│                                 │  • inventory-app-hpa          │
+└─────────────────────────────────┴───────────────────────────────┘
+```
 
 ## Chart Structure
 
 ```
 helm/inventory-app/
-├── Chart.yaml                    # Chart metadata and versioning
-├── values.yaml                   # DEFAULT configuration (currently running)
-├── values-dev.yaml               # Development environment overrides
-├── values-stage.yaml             # Staging environment overrides
-├── values-prod.yaml              # Production environment overrides
+├── Chart.yaml              # Chart metadata (name, version, description)
+├── values.yaml             # Default values (combined config)
+├── values-app.yaml         # App-only release configuration
+├── values-db.yaml          # Database-only release configuration
+├── .helmignore             # Files to ignore when packaging
+├── README.md               # This file
 └── templates/
-    ├── _helpers.tpl              # Template helper functions
-    ├── deployment.yaml           # Application deployment (matches k8s/app-deployment.yaml)
-    ├── service.yaml              # App service (matches k8s/app-service.yaml)
-    ├── configmap.yaml            # ConfigMap (matches k8s/configmap.yaml)
-    ├── secret.yaml               # Secrets (matches k8s/secret.yaml)
-    ├── hpa.yaml                  # HPA (matches k8s/hpa.yaml)
-    ├── postgres-statefulset.yaml # PostgreSQL (matches k8s/db_deployment.yaml)
-    ├── postgres-service.yaml     # DB service (matches k8s/db_service.yaml)
-    ├── serviceaccount.yaml       # Service account
-    └── ingress.yaml              # Ingress configuration
+    ├── _helpers.tpl        # Template helper functions
+    ├── deployment.yaml     # App Deployment (conditional: app.enabled)
+    ├── service.yaml        # Services (iterates over myServices map)
+    ├── configmap.yaml      # ConfigMaps (conditional: app/db)
+    ├── secret.yaml         # Secrets (conditional: app/db)
+    ├── hpa.yaml            # HorizontalPodAutoscaler
+    ├── postgres-statefulset.yaml  # PostgreSQL StatefulSet
+    ├── serviceaccount.yaml # ServiceAccount
+    ├── ingress.yaml        # Ingress (optional)
+    └── NOTES.txt           # Post-install instructions
 ```
-
-## Environment Differences
-
-| Setting | values.yaml (Default) | values-dev.yaml | values-prod.yaml |
-|---------|----------------------|-----------------|------------------|
-| Replicas | 1 | 1 | 3 |
-| Image Pull Policy | Never (local) | Never (local) | IfNotPresent |
-| Service Type | NodePort | NodePort | ClusterIP |
-| NodePort | 30007 | auto-assign | N/A |
-| Autoscaling | Enabled (1-10) | Disabled | Enabled (3-15) |
-| PostgreSQL | Enabled | Enabled | Disabled (external DB) |
-| Ingress | Disabled | Disabled | Enabled with TLS |
-| Resources | 100m-500m CPU | 100m-500m CPU | 500m-1000m CPU |
 
 ## Prerequisites
 
@@ -63,156 +48,292 @@ helm/inventory-app/
 - Helm 3.0+
 - kubectl configured to access your cluster
 - Minikube (for local development)
+- Docker image `inventory_project_api:multistage` built locally
 
-## Installation
+## Quick Start
 
-### Install Helm (if not already installed)
+### 1. Build the Docker Image (Minikube)
 
 ```bash
-# Linux/macOS
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# Point Docker to Minikube's daemon
+eval $(minikube docker-env)
 
-# Verify installation
-helm version
+# Build the image
+docker build -t inventory_project_api:multistage .
 ```
 
-## Deployment Commands
+### 2. Create Namespace
 
-### Current Setup (Default values.yaml)
-
-This is what we're currently running:
 ```bash
-# Install with default values.yaml
-helm install inventory ./helm/inventory-app --namespace default
-
-# Access the app
-minikube service inventory-service --url
-# Or: http://<minikube-ip>:30007
+kubectl create namespace inventory-ns
 ```
 
-### How to Switch to Development Environment
+### 3. Deploy Database Release
 
 ```bash
-# Uninstall current release
-helm uninstall inventory -n default
-
-# Install with dev values
-helm install inventory-dev ./helm/inventory-app \
-  -f ./helm/inventory-app/values-dev.yaml \
-  --namespace dev \
-  --create-namespace
+helm install db-release ./helm/inventory-app \
+  --namespace inventory-ns \
+  -f ./helm/inventory-app/values-db.yaml
 ```
 
-### How to Switch to Staging Environment
+### 4. Deploy Application Release
 
 ```bash
-helm install inventory-stage ./helm/inventory-app \
-  -f ./helm/inventory-app/values-stage.yaml \
-  --namespace staging \
-  --create-namespace
+helm install app-release ./helm/inventory-app \
+  --namespace inventory-ns \
+  -f ./helm/inventory-app/values-app.yaml
 ```
 
-### How to Switch to Production Environment
+### 5. Access the Application
 
 ```bash
-# Production requires external secrets (never commit real passwords!)
-export DB_PASSWORD="your-secure-db-password"
-export ADMIN_PASSWORD="your-secure-admin-password"
-
-helm install inventory-prod ./helm/inventory-app \
-  -f ./helm/inventory-app/values-prod.yaml \
-  --namespace production \
-  --create-namespace \
-  --set secrets.postgresPassword=$DB_PASSWORD \
-  --set secrets.adminPassword=$ADMIN_PASSWORD
-```
-
-### Running Multiple Environments Simultaneously
-
-You can run all environments at the same time in different namespaces:
-```bash
-# Default namespace (current)
-helm install inventory ./helm/inventory-app -n default
-
-# Dev namespace
-helm install inventory-dev ./helm/inventory-app -f ./helm/inventory-app/values-dev.yaml -n dev --create-namespace
-
-# Staging namespace  
-helm install inventory-stage ./helm/inventory-app -f ./helm/inventory-app/values-stage.yaml -n staging --create-namespace
-
-# Production namespace
-helm install inventory-prod ./helm/inventory-app -f ./helm/inventory-app/values-prod.yaml -n production --create-namespace
-```
-
-## Configuration
-
-### Key Parameters (Default values.yaml)
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `app.name` | Application name | `inventory-app` |
-| `app.replicaCount` | Number of replicas | `1` |
-| `image.repository` | Image repository | `inventory_project_api` |
-| `image.tag` | Image tag | `multistage` |
-| `image.pullPolicy` | Image pull policy | `Never` (local) |
-| `service.type` | Service type | `NodePort` |
-| `service.port` | Service port | `8000` |
-| `service.nodePort` | NodePort | `30007` |
-| `autoscaling.enabled` | Enable HPA | `true` |
-| `autoscaling.minReplicas` | Min replicas | `1` |
-| `autoscaling.maxReplicas` | Max replicas | `10` |
-| `autoscaling.targetCPUUtilizationPercentage` | CPU target | `50` |
-| `postgresql.enabled` | Deploy PostgreSQL | `true` |
-
-### Override Values
-
-```bash
-helm install my-release ./helm/inventory-app \
-  --set app.replicaCount=3 \
-  --set image.tag="v2.0.0"
-```
-
-## Useful Commands
-
-### Access the Application (Minikube)
-
-```bash
-minikube service inventory-service --url
+minikube service inventory-service -n inventory-ns --url
 # Or directly: http://<minikube-ip>:30007
 ```
 
-### View Release Status
+## Values Files Explained
 
-```bash
-helm status inventory
+### values-db.yaml
+Deploys **only** the database components:
+- PostgreSQL StatefulSet
+- Headless Service (`postgres-service`)
+- Database ConfigMap and Secret
+
+Key settings:
+```yaml
+app:
+  enabled: false           # Don't deploy app
+postgresql:
+  enabled: true            # Deploy database
+common:
+  enabled: true            # Create shared resources
+myServices:
+  backend:
+    enabled: false         # Don't create app service
+  postgres:
+    enabled: true          # Create DB service
 ```
 
-### View Generated Manifests (Dry Run)
+### values-app.yaml
+Deploys **only** the application components:
+- Application Deployment
+- NodePort Service (`inventory-service`)
+- App ConfigMap and Secret
+- HPA and ServiceAccount
 
-```bash
-helm template inventory ./helm/inventory-app
+Key settings:
+```yaml
+app:
+  enabled: true            # Deploy app
+postgresql:
+  enabled: false           # Don't deploy database
+common:
+  enabled: false           # DB release created these
+myServices:
+  backend:
+    enabled: true          # Create app service
+  postgres:
+    enabled: false         # Don't create DB service
 ```
 
-### Uninstall Release
+## Command Reference
+
+### Installation
 
 ```bash
-helm uninstall inventory
+# Install DB release
+helm install db-release ./helm/inventory-app \
+  -n inventory-ns \
+  -f ./helm/inventory-app/values-db.yaml
+
+# Install App release
+helm install app-release ./helm/inventory-app \
+  -n inventory-ns \
+  -f ./helm/inventory-app/values-app.yaml
 ```
 
-### Rollback to Previous Version
+### Upgrade (After Editing Values)
 
 ```bash
-helm rollback inventory 1
+# Upgrade DB release
+helm upgrade db-release ./helm/inventory-app \
+  -n inventory-ns \
+  -f ./helm/inventory-app/values-db.yaml
+
+# Upgrade App release
+helm upgrade app-release ./helm/inventory-app \
+  -n inventory-ns \
+  -f ./helm/inventory-app/values-app.yaml
 ```
 
-## Comparison with k8s/ folder
+### Install or Upgrade (Recommended)
 
-| k8s File | Helm Template |
-|----------|---------------|
-| `app-deployment.yaml` | `templates/deployment.yaml` |
-| `app-service.yaml` | `templates/service.yaml` |
-| `configmap.yaml` | `templates/configmap.yaml` |
-| `secret.yaml` | `templates/secret.yaml` |
-| `hpa.yaml` | `templates/hpa.yaml` |
-| `db_deployment.yaml` | `templates/postgres-statefulset.yaml` |
-| `db_service.yaml` | `templates/postgres-service.yaml` |
+```bash
+# Creates if not exists, upgrades if exists
+helm upgrade --install db-release ./helm/inventory-app \
+  -n inventory-ns \
+  -f ./helm/inventory-app/values-db.yaml
+
+helm upgrade --install app-release ./helm/inventory-app \
+  -n inventory-ns \
+  -f ./helm/inventory-app/values-app.yaml
+```
+
+### Uninstall
+
+```bash
+# Uninstall both releases
+helm uninstall app-release db-release -n inventory-ns
+
+# Delete namespace (complete cleanup)
+kubectl delete namespace inventory-ns
+```
+
+### Status & Debugging
+
+```bash
+# List releases
+helm list -n inventory-ns
+
+# Check release status
+helm status app-release -n inventory-ns
+helm status db-release -n inventory-ns
+
+# View deployed manifests
+helm get manifest app-release -n inventory-ns
+helm get manifest db-release -n inventory-ns
+
+# View used values
+helm get values app-release -n inventory-ns
+helm get values db-release -n inventory-ns
+
+# Dry-run / Template preview
+helm template app-release ./helm/inventory-app \
+  -n inventory-ns \
+  -f ./helm/inventory-app/values-app.yaml
+
+# Lint chart
+helm lint ./helm/inventory-app
+
+# Check resources
+kubectl get all -n inventory-ns
+
+# View logs
+kubectl logs -l app=inventory-app -n inventory-ns
+kubectl logs -l app=postgres -n inventory-ns
+
+# Describe pod issues
+kubectl describe pod -l app=inventory-app -n inventory-ns
+```
+
+### Rollback
+
+```bash
+# View history
+helm history app-release -n inventory-ns
+
+# Rollback to previous
+helm rollback app-release -n inventory-ns
+
+# Rollback to specific revision
+helm rollback app-release 1 -n inventory-ns
+```
+
+### Access Application
+
+```bash
+# Get URL via Minikube
+minikube service inventory-service -n inventory-ns --url
+
+# Or manually
+export NODE_IP=$(minikube ip)
+export NODE_PORT=$(kubectl get svc inventory-service -n inventory-ns -o jsonpath='{.spec.ports[0].nodePort}')
+echo "http://$NODE_IP:$NODE_PORT"
+
+# Port forward (alternative)
+kubectl port-forward svc/inventory-service 8000:8000 -n inventory-ns
+```
+
+## Configuration Parameters
+
+### Application Settings (values-app.yaml)
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `app.enabled` | Deploy application | `true` |
+| `app.replicaCount` | Number of replicas | `3` |
+| `app.containerPort` | Container port | `8000` |
+| `image.repository` | Image name | `inventory_project_api` |
+| `image.tag` | Image tag | `multistage` |
+| `image.pullPolicy` | Pull policy | `Never` |
+| `autoscaling.enabled` | Enable HPA | `true` |
+| `autoscaling.minReplicas` | Min replicas | `1` |
+| `autoscaling.maxReplicas` | Max replicas | `10` |
+
+### Database Settings (values-db.yaml)
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `postgresql.enabled` | Deploy PostgreSQL | `true` |
+| `postgresql.image` | PostgreSQL image | `postgres:15` |
+| `postgresql.replicas` | Number of replicas | `1` |
+| `postgresql.storage.size` | PVC size | `1Gi` |
+
+### Service Settings
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `myServices.backend.type` | Service type | `NodePort` |
+| `myServices.backend.nodePort` | NodePort | `30007` |
+| `myServices.backend.port` | Service port | `8000` |
+| `myServices.postgres.headless` | Headless service | `true` |
+
+## Troubleshooting
+
+### Pods not starting
+```bash
+kubectl describe pod -l app=inventory-app -n inventory-ns
+kubectl get events -n inventory-ns --sort-by='.lastTimestamp'
+```
+
+### Database connection issues
+```bash
+# Check if postgres is running
+kubectl get pods -l app=postgres -n inventory-ns
+
+# Check postgres logs
+kubectl logs -l app=postgres -n inventory-ns
+
+# Test connectivity
+kubectl port-forward svc/postgres-service 5432:5432 -n inventory-ns
+# Then connect with: psql -h localhost -U postgres -d inventory_db
+```
+
+### Service not accessible
+```bash
+# Check service exists
+kubectl get svc -n inventory-ns
+
+# Check endpoints
+kubectl get endpoints -n inventory-ns
+
+# Verify pod labels match service selector
+kubectl get pods -n inventory-ns --show-labels
+```
+
+## Comparison: Helm vs Raw k8s/
+
+| Feature | Raw k8s/ | Helm |
+|---------|----------|------|
+| Templating | No | Yes (Go templates) |
+| Environment configs | Manual editing | values-*.yaml |
+| Versioning | Git only | Helm revisions |
+| Rollback | Manual | `helm rollback` |
+| Dependencies | Manual order | Managed |
+| Reusability | Copy/paste | Single chart |
+
+## Related Documentation
+
+- [Main README](../../README.md) - Project overview
+- [k8s/README.md](../../k8s/README.md) - Raw Kubernetes manifests
+- [crud_files/README.md](../../crud_files/README.md) - CRUD operations
