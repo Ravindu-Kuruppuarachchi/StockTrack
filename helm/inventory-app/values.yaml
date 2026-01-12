@@ -19,7 +19,7 @@ app:
   containerPort: 8000
 
 image:
-  repository: inventory_project_api
+  repository: ravindukuruppuarachchi/inventory_project_api
   tag: "multistage"
   pullPolicy: Always  # Assumes local Minikube image
 
