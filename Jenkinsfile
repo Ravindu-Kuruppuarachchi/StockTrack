@@ -73,7 +73,7 @@ pipeline {
                         """
                         
                         // 2. Verify rollout status
-                        sh "kubectl rollout status deployment/${RELEASE_NAME} -n ${NAMESPACE}"
+                        sh "kubectl rollout status deployment/inventory-app -n ${NAMESPACE}"
                     }
                 }
             }
