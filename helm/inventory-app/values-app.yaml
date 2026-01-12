@@ -60,7 +60,7 @@ myConfigMaps:
 
 
 secrets:
-  adminPassword: "SecretAdminPassword123!"
+  adminPassword: ""
 
 # --- ADDITIONAL APP RESOURCES ---
 serviceAccount:

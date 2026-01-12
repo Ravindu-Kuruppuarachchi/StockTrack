@@ -26,15 +26,20 @@ pipeline {
         stage('Deploy App') {
             steps {
                 script {
-                    withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
-                        // Note: We use values-app.yaml here
+                    // 1. Wrap the command in 'withCredentials' to get the secret
+                    withCredentials([string(credentialsId: 'app-admin-password', variable: 'ADMIN_PASS'),
+                                    file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
+                        
+                        // 2. Add the --set flag to inject the password dynamically
                         sh """
                             helm upgrade --install ${RELEASE_NAME} ./helm/inventory-app \
                             -f ./helm/inventory-app/values-app.yaml \
                             --set image.tag=${DOCKER_TAG} \
+                            --set secrets.adminPassword=${ADMIN_PASS} \
                             --namespace ${NAMESPACE} \
                             --create-namespace
                         """
+                        
                         sh "kubectl rollout status deployment/inventory-app -n ${NAMESPACE}"
                     }
                 }
