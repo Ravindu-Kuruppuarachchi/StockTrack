@@ -1,0 +1,30 @@
+// Filename: Jenkinsfile.db
+pipeline {
+    agent any
+    environment {
+        NAMESPACE = 'inventory-ns'
+        RELEASE_NAME = 'db-release'
+    }
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+        stage('Deploy Database') {
+            steps {
+                script {
+                    echo 'Deploying Database Layer...'
+                    withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
+                        // Note: We use values-db.yaml here
+                        sh """
+                            helm upgrade --install ${RELEASE_NAME} ./helm/inventory-app \
+                            -f ./helm/inventory-app/values-db.yaml \
+                            --namespace ${NAMESPACE} \
+                            --create-namespace
+                        """
+                        sh "kubectl rollout status statefulset/inventory-app-statefulset -n ${NAMESPACE}"
+                    }
+                }
+            }
+        }
+    }
+}
