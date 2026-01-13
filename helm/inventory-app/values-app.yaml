@@ -52,6 +52,7 @@ myConfigMaps:
     suffix: "app-config"
     data:
       admin-email: "admin@airarabia.com"
+      database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
 
       #removed database-url as db password is not here anymore
 
@@ -61,7 +62,7 @@ myConfigMaps:
 
 
 secrets:
-  adminPassword: "" # Injected via Jenkinsfile
+  adminPassword: "SecretAdminPassword123!" # Injected via Jenkinsfile
 
 # --- ADDITIONAL APP RESOURCES ---
 serviceAccount:
