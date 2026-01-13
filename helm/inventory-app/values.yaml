@@ -21,7 +21,7 @@ app:
 image:
   repository: ravindukuruppuarachchi/inventory_project_api
   tag: "multistage"
-  pullPolicy: Always  # Assumes local Minikube image
+  pullPolicy: IfNotPresent  # Assumes local Minikube image
 
 imagePullSecrets: []
 
@@ -81,7 +81,7 @@ postgresql:
   image: 
     repository: ravindukuruppuarachchi/inventory_project_db
     tag: "latest"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   replicas: 1
   containerName: "postgres"
   mountPath: "/var/lib/postgresql/data"

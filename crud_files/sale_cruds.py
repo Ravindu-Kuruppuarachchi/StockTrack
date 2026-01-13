@@ -8,11 +8,16 @@ def get_all_sales(db: Session):
     return db.query(Sale).order_by(Sale.id.desc()).all()
 
 def create_sale(db: Session, product_name: str, quantity: int, total_amount: float):
+    product = product_cruds.get_product_by_name(db, product_name)
+    if not product:
+        return None
+    
     new_sale = Sale(
         product_name=product_name,
         quantity=quantity,
         total_amount=total_amount,
-        sale_date=date.today()
+        sale_date=date.today(),
+        product_id=product.id
     )
     db.add(new_sale)
     db.commit()

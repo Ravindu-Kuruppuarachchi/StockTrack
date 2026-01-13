@@ -1,6 +1,11 @@
 // Filename: Jenkinsfile.app
 pipeline {
     agent any
+
+    // NEW: This tells Jenkins to check GitHub every 2 minutes automatically
+    //triggers {
+    //    pollSCM('H/2 * * * *')
+    //}
     environment {
         // CI SETTINGS
         DOCKER_IMAGE = 'ravindukuruppuarachchi/inventory_project_api'
@@ -40,3 +45,4 @@ pipeline {
         }
     }
 }
+

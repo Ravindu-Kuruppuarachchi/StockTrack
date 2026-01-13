@@ -34,11 +34,11 @@ pipeline {
                                 sh """
                                     helm upgrade --install ${DB_RELEASE} ./helm/inventory-app \
                                     -f ./helm/inventory-app/values-db.yaml \
-                                    --set postgresql.image.tag=${params.DB_TAG} \
+                                    --set postgresql.image.tag=${params.DB_TAG} \ 
                                     --set postgresql.auth.postgresPassword="${DB_PASS}" \
                                     --namespace ${NAMESPACE} \
                                     --create-namespace
-                                """
+                                """ // we override the postgres image tag and DB password here
                                 sh "kubectl rollout status statefulset/inventory-app-statefulset -n ${NAMESPACE}"
                             }
                             echo "--- Database Deployed Successfully ---"
@@ -61,7 +61,7 @@ pipeline {
                                     --set myConfigMaps.app.data.database-url="${DB_URL}" \
                                     --namespace ${NAMESPACE} \
                                     --create-namespace
-                                """
+                                """  // we override the image tag, database url and admin password here
                                 sh "kubectl rollout status deployment/inventory-app -n ${NAMESPACE}"
                             }
                             echo "--- App Deployed Successfully ---"
