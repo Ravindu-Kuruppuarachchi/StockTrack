@@ -34,7 +34,7 @@ pipeline {
                                 sh """
                                     helm upgrade --install ${DB_RELEASE} ./helm/inventory-app \
                                     -f ./helm/inventory-app/values-db.yaml \
-                                    --set image.tag=${params.DB_TAG} \
+                                    --set postgresql.image.tag=${params.DB_TAG} \
                                     --set postgresql.auth.postgresPassword="${DB_PASS}" \
                                     --namespace ${NAMESPACE} \
                                     --create-namespace

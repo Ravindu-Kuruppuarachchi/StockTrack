@@ -12,15 +12,15 @@ labels:
   tier: backend
   owner: "devops-team"
 
-image:
-  repository: ravindukuruppuarachchi/inventory_project_db  # <--- CHANGED
-  tag: "latest"  # <--- Will be overridden by Jenkins
-  pullPolicy: Always
+
 
 # --- DATABASE CONFIGURATION ---
 postgresql:
   enabled: true
-  image: "postgres:15"
+  image:
+    repository: ravindukuruppuarachchi/inventory_project_db  # <--- CHANGED
+    tag: "latest"  # <--- Will be overridden by Jenkins
+    pullPolicy: Always
   replicas: 1
   containerName: "postgres"
   mountPath: "/var/lib/postgresql/data"

@@ -78,7 +78,10 @@ secrets:
 # --- DATABASE CONFIGURATION ---
 postgresql:
   enabled: true
-  image: "postgres:15"
+  image: 
+    repository: ravindukuruppuarachchi/inventory_project_db
+    tag: "latest"
+    pullPolicy: Always
   replicas: 1
   containerName: "postgres"
   mountPath: "/var/lib/postgresql/data"
