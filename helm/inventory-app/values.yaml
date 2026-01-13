@@ -70,10 +70,9 @@ myConfigMaps:
     suffix: "app-config"
     data:
       admin-email: "admin@airarabia.com"
-      database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
 
 secrets:
-  postgresPassword: "airarabia"
+  postgresPassword: "" # Injected via Jenkinsfile
   adminPassword: ""
 
 # --- DATABASE CONFIGURATION ---

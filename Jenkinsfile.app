@@ -23,19 +23,24 @@ pipeline {
             }
         }
 
+        // Inside Jenkinsfile.app -> Deploy App Stage
         stage('Deploy App') {
             steps {
                 script {
-                    // 1. Wrap the command in 'withCredentials' to get the secret
                     withCredentials([string(credentialsId: 'app-admin-password', variable: 'ADMIN_PASS'),
+                                    string(credentialsId: 'db-password', variable: 'DB_PASS'),
                                     file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
                         
-                        // 2. Add the --set flag to inject the password dynamically
+                        // Construct the URL dynamically
+                        def DB_URL = "postgresql://postgres:${DB_PASS}@postgres-service:5432/inventory_db"
+                        
+                        // Added quotes "..." around the variables in --set to handle special characters safely
                         sh """
                             helm upgrade --install ${RELEASE_NAME} ./helm/inventory-app \
                             -f ./helm/inventory-app/values-app.yaml \
                             --set image.tag=${DOCKER_TAG} \
-                            --set secrets.adminPassword=${ADMIN_PASS} \
+                            --set secrets.adminPassword="${ADMIN_PASS}" \
+                            --set myConfigMaps.app.data.database-url="${DB_URL}" \
                             --namespace ${NAMESPACE} \
                             --create-namespace
                         """

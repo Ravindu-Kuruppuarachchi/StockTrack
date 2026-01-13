@@ -58,4 +58,4 @@ serviceAccount:
   create: false
   
 secrets:
-  postgresPassword: "airarabia"
+  postgresPassword: "" #injected via Jenkinsfile

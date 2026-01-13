@@ -9,15 +9,16 @@ pipeline {
         stage('Checkout') {
             steps { checkout scm }
         }
+        // Inside Jenkinsfile.db
         stage('Deploy Database') {
             steps {
                 script {
-                    echo 'Deploying Database Layer...'
-                    withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
-                        // Note: We use values-db.yaml here
+                    withCredentials([string(credentialsId: 'db-password', variable: 'DB_PASS'),
+                                    file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
                         sh """
                             helm upgrade --install ${RELEASE_NAME} ./helm/inventory-app \
                             -f ./helm/inventory-app/values-db.yaml \
+                            --set postgresql.auth.postgresPassword=${DB_PASS} \
                             --namespace ${NAMESPACE} \
                             --create-namespace
                         """
