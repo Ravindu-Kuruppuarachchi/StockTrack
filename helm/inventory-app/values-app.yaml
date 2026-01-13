@@ -7,11 +7,11 @@ postgresql:
 common:
   enabled: false  
 
-
 labels:
   app: inventory-app
   tier: backend
   owner: "devops-team"
+
 selectorLabels:
   app: inventory-app
   tier: backend

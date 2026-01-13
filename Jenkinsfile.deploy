@@ -3,11 +3,13 @@ pipeline {
     agent any
     
     parameters {
-        // Added 'Both' to the choices
         choice(name: 'SERVICE', choices: ['App', 'Database', 'Both'], description: 'Which service to deploy?')
         
-        // Default to 'latest' if user doesn't specify
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'For APP only: Which Build Number to deploy? (e.g. 10)')
+        // PARAM 1: The App Version
+        string(name: 'APP_TAG', defaultValue: 'latest', description: 'APP Version to deploy (e.g. 15)')
+        
+        // PARAM 2: The DB Version (NEW)
+        string(name: 'DB_TAG', defaultValue: 'latest', description: 'DATABASE Version to deploy (e.g. 5)')
     }
 
     environment {
@@ -25,14 +27,14 @@ pipeline {
                     withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
                         
                         // --- LOGIC: DATABASE ---
-                        // Run if user picked "Database" OR "Both"
                         if (params.SERVICE == 'Database' || params.SERVICE == 'Both') {
-                            echo "--- Deploying DATABASE (StatefulSet) ---"
+                            echo "--- Deploying DATABASE: Tag ${params.DB_TAG} ---"
                             
                             withCredentials([string(credentialsId: 'db-password', variable: 'DB_PASS')]) {
                                 sh """
                                     helm upgrade --install ${DB_RELEASE} ./helm/inventory-app \
                                     -f ./helm/inventory-app/values-db.yaml \
+                                    --set image.tag=${params.DB_TAG} \
                                     --set postgresql.auth.postgresPassword="${DB_PASS}" \
                                     --namespace ${NAMESPACE} \
                                     --create-namespace
@@ -43,9 +45,8 @@ pipeline {
                         }
 
                         // --- LOGIC: APP ---
-                        // Run if user picked "App" OR "Both"
                         if (params.SERVICE == 'App' || params.SERVICE == 'Both') {
-                            echo "--- Deploying APP Version: ${params.IMAGE_TAG} ---"
+                            echo "--- Deploying APP: Tag ${params.APP_TAG} ---"
                             
                             withCredentials([string(credentialsId: 'app-admin-password', variable: 'ADMIN_PASS'),
                                              string(credentialsId: 'db-password', variable: 'DB_PASS')]) {
@@ -55,7 +56,7 @@ pipeline {
                                 sh """
                                     helm upgrade --install ${APP_RELEASE} ./helm/inventory-app \
                                     -f ./helm/inventory-app/values-app.yaml \
-                                    --set image.tag=${params.IMAGE_TAG} \
+                                    --set image.tag=${params.APP_TAG} \
                                     --set secrets.adminPassword="${ADMIN_PASS}" \
                                     --set myConfigMaps.app.data.database-url="${DB_URL}" \
                                     --namespace ${NAMESPACE} \

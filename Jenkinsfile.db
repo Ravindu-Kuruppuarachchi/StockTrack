@@ -1,22 +1,40 @@
 // Filename: Jenkinsfile.db
 pipeline {
     agent any
+    environment {
+        // NEW: We are pushing to a separate repository for the database
+        DB_IMAGE = 'ravindukuruppuarachchi/inventory_project_db'
+        DB_TAG   = "${BUILD_NUMBER}"
+    }
     stages {
         stage('Checkout') { steps { checkout scm } }
+
+        stage('Build & Push DB Image') {
+            steps {
+                script {
+                    echo "Building Database Image: ${DB_TAG}"
+                    
+                    // Note the '-f Dockerfile.db' flag to use the specific file
+                    sh "docker build -f Dockerfile.db -t ${DB_IMAGE}:${DB_TAG} ."
+                    
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "echo $PASS | docker login -u $USER --password-stdin"
+                        sh "docker push ${DB_IMAGE}:${DB_TAG}"
+                        
+                        // Push 'latest' for convenience
+                        sh "docker tag ${DB_IMAGE}:${DB_TAG} ${DB_IMAGE}:latest"
+                        sh "docker push ${DB_IMAGE}:latest"
+                    }
+                }
+            }
+        }
 
         stage('Validate Config') {
             steps {
                 script {
-                    echo "Validating Database Configuration..."
-                    // Check if the Helm chart syntax is valid
                     sh "helm lint ./helm/inventory-app -f ./helm/inventory-app/values-db.yaml"
                 }
             }
-        }
-    }
-    post {
-        success {
-            echo "SUCCESS: Database configuration is valid."
         }
     }
 }

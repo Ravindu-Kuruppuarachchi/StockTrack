@@ -86,6 +86,8 @@ postgresql:
     size: 1Gi
     accessMode: ReadWriteOnce
 
+
+
 # --- OTHER RESOURCES ---
 
 autoscaling:
