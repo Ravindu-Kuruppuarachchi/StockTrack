@@ -1,31 +1,22 @@
 // Filename: Jenkinsfile.db
 pipeline {
     agent any
-    environment {
-        NAMESPACE = 'inventory-ns'
-        RELEASE_NAME = 'db-release'
-    }
     stages {
-        stage('Checkout') {
-            steps { checkout scm }
-        }
-        // Inside Jenkinsfile.db
-        stage('Deploy Database') {
+        stage('Checkout') { steps { checkout scm } }
+
+        stage('Validate Config') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'db-password', variable: 'DB_PASS'),
-                                    file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
-                        sh """
-                            helm upgrade --install ${RELEASE_NAME} ./helm/inventory-app \
-                            -f ./helm/inventory-app/values-db.yaml \
-                            --set postgresql.auth.postgresPassword=${DB_PASS} \
-                            --namespace ${NAMESPACE} \
-                            --create-namespace
-                        """
-                        sh "kubectl rollout status statefulset/inventory-app-statefulset -n ${NAMESPACE}"
-                    }
+                    echo "Validating Database Configuration..."
+                    // Check if the Helm chart syntax is valid
+                    sh "helm lint ./helm/inventory-app -f ./helm/inventory-app/values-db.yaml"
                 }
             }
+        }
+    }
+    post {
+        success {
+            echo "SUCCESS: Database configuration is valid."
         }
     }
 }

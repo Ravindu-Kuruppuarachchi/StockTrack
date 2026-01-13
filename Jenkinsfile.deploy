@@ -1,0 +1,73 @@
+// Filename: Jenkinsfile.deploy
+pipeline {
+    agent any
+    
+    parameters {
+        // Added 'Both' to the choices
+        choice(name: 'SERVICE', choices: ['App', 'Database', 'Both'], description: 'Which service to deploy?')
+        
+        // Default to 'latest' if user doesn't specify
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'For APP only: Which Build Number to deploy? (e.g. 10)')
+    }
+
+    environment {
+        NAMESPACE    = 'inventory-ns'
+        APP_RELEASE  = 'app-release'
+        DB_RELEASE   = 'db-release'
+    }
+
+    stages {
+        stage('Checkout') { steps { checkout scm } }
+
+        stage('Deploy Selection') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
+                        
+                        // --- LOGIC: DATABASE ---
+                        // Run if user picked "Database" OR "Both"
+                        if (params.SERVICE == 'Database' || params.SERVICE == 'Both') {
+                            echo "--- Deploying DATABASE (StatefulSet) ---"
+                            
+                            withCredentials([string(credentialsId: 'db-password', variable: 'DB_PASS')]) {
+                                sh """
+                                    helm upgrade --install ${DB_RELEASE} ./helm/inventory-app \
+                                    -f ./helm/inventory-app/values-db.yaml \
+                                    --set postgresql.auth.postgresPassword="${DB_PASS}" \
+                                    --namespace ${NAMESPACE} \
+                                    --create-namespace
+                                """
+                                sh "kubectl rollout status statefulset/inventory-app-statefulset -n ${NAMESPACE}"
+                            }
+                            echo "--- Database Deployed Successfully ---"
+                        }
+
+                        // --- LOGIC: APP ---
+                        // Run if user picked "App" OR "Both"
+                        if (params.SERVICE == 'App' || params.SERVICE == 'Both') {
+                            echo "--- Deploying APP Version: ${params.IMAGE_TAG} ---"
+                            
+                            withCredentials([string(credentialsId: 'app-admin-password', variable: 'ADMIN_PASS'),
+                                             string(credentialsId: 'db-password', variable: 'DB_PASS')]) {
+                                
+                                def DB_URL = "postgresql://postgres:${DB_PASS}@postgres-service:5432/inventory_db"
+                                
+                                sh """
+                                    helm upgrade --install ${APP_RELEASE} ./helm/inventory-app \
+                                    -f ./helm/inventory-app/values-app.yaml \
+                                    --set image.tag=${params.IMAGE_TAG} \
+                                    --set secrets.adminPassword="${ADMIN_PASS}" \
+                                    --set myConfigMaps.app.data.database-url="${DB_URL}" \
+                                    --namespace ${NAMESPACE} \
+                                    --create-namespace
+                                """
+                                sh "kubectl rollout status deployment/inventory-app -n ${NAMESPACE}"
+                            }
+                            echo "--- App Deployed Successfully ---"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
