@@ -38,8 +38,8 @@ myServices:
   backend:
     name: inventory-service
     enabled: true
-    type: NodePort
-    nodePort: 30007
+    type: LoadBalancer
+    #nodePort: 30007
     port: 8000
     targetPort: 8000
     selector:
@@ -87,7 +87,7 @@ postgresql:
   containerName: "postgres"
   mountPath: "/var/lib/postgresql/data"
   storage:
-    size: 1Gi
+    size: 50Gi
     accessMode: ReadWriteOnce
 
 

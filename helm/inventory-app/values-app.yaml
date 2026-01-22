@@ -36,9 +36,9 @@ myServices:
   backend:
     name: inventory-service
     enabled: true
-    type: NodePort
-    nodePort: 30007
-    port: 8000  # EDITABLE: This is the internal Service IP port
+    type: Loadbalancer
+    #nodePort: 30007
+    port: 8000 # EDITABLE: This is the internal Service IP port
     targetPort: 8000 # CANNOT EDIT: Must match 'app.containerPort' above
     selector:
       app: inventory-app

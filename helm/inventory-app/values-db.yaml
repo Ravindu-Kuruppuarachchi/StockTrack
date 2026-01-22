@@ -25,7 +25,7 @@ postgresql:
   containerName: "postgres"
   mountPath: "/var/lib/postgresql/data"
   storage:
-    size: 1Gi
+    size: 50Gi
     accessMode: ReadWriteOnce
 
 # --- SERVICES (Map Format) ---
