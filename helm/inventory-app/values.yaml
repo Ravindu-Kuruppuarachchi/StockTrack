@@ -38,7 +38,7 @@ myServices:
   backend:
     name: inventory-service
     enabled: true
-    type: Loadbalancer
+    type: LoadBalancer
     #nodePort: 30007
     port: 8000
     targetPort: 8000
