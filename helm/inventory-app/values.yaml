@@ -19,7 +19,7 @@ app:
   containerPort: 8000
 
 image:
-  repository: ravindukuruppuarachchi/inventory_project_api
+  repository: docker.io/ravindukuruppuarachchi/inventory_project_api
   tag: "multistage"
   pullPolicy: IfNotPresent  # Assumes local Minikube image
 
@@ -80,7 +80,7 @@ secrets:
 postgresql:
   enabled: true
   image: 
-    repository: ravindukuruppuarachchi/inventory_project_db
+    repository: docker.io/ravindukuruppuarachchi/inventory_project_db
     tag: "latest"
     pullPolicy: IfNotPresent
   replicas: 1

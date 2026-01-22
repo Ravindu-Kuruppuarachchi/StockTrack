@@ -18,7 +18,7 @@ labels:
 postgresql:
   enabled: true
   image:
-    repository: ravindukuruppuarachchi/inventory_project_db  # <--- CHANGED
+    repository: docker.io/ravindukuruppuarachchi/inventory_project_db  # <--- CHANGED
     tag: "latest"  # <--- Will be overridden by Jenkins
     pullPolicy: IfNotPresent
   replicas: 1

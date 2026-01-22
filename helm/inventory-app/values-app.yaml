@@ -23,7 +23,7 @@ app:
   containerPort: 8000  ## CANNOT EDIT
 
 image:
-  repository: ravindukuruppuarachchi/inventory_project_api
+  repository: docker.io/ravindukuruppuarachchi/inventory_project_api
   tag: "multistage"
   pullPolicy: IfNotPresent
 
