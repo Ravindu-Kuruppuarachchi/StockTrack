@@ -23,6 +23,9 @@ postgresql:
     pullPolicy: IfNotPresent
   replicas: 1
   containerName: "postgres"
+  env:
+    - name: PGDATA
+      value: "/var/lib/postgresql/data/pgdata"
   mountPath: "/var/lib/postgresql/data"
   storage:
     size: 50Gi
