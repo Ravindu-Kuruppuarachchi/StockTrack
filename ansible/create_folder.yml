@@ -1,0 +1,12 @@
+--- #Indicates this is a YAML document.
+- name: Create folder on OCI VM #Name of the playbook for identification.
+  hosts: db_servers #Specifies which hosts from your inventory file to run this playbook on. In your case, it targets the db_servers group which contains your OCI VM.
+  become: yes  #Enables sudo to run tasks with root privileges.
+  tasks: #Begins the list of tasks to execute on the target hosts.
+    - name: Create a directory
+      ansible.builtin.file: #Uses Ansible's built-in file module to manage files and directories.
+        path: /home/ubuntu/myapp #Specifies the full path where the directory will be created 
+        state: directory #ensures this path exists as a directory (not a file). Creates it if missing.
+        mode: '0755'  #Sets directory permissions to rwxr-xr-x (owner can read/write/execute, group and others can read/execute).
+        owner: ubuntu # Set directory of the owner to ubuntu user
+        group: ubuntu # Sets the directory group to the ubuntu group.

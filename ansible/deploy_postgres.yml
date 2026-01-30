@@ -1,0 +1,74 @@
+---
+- name: Deploy Local-Only PostgreSQL on OCI
+  hosts: db_servers # Targets the 'postgres-vm' defined in inventory file
+  become: yes  # Automatically runs all commands with 'sudo' (as root)
+
+  vars_files:
+    - secrets.yml  # Loads variables from an external file for better organization
+  vars:
+    # Standard Ubuntu 22.04 Postgres version is 14
+    postgres_version: "14"
+    db_name: "inventory_db"
+    db_user: "postgres" # We will use the default superuser for simplicity
+    db_password: "{{ vault_db_password }}" # Password is stored securely in 'secret.yml'
+    # This is where PostgreSQL normally stores data. We will replace this folder with 50GB disk.
+    data_dir: "/var/lib/postgresql"
+
+  tasks:
+    # 1. CONFIGURE STORAGE
+    - name: Create ext4 filesystem on block volume
+      filesystem:
+        fstype: ext4
+        dev: /dev/sdb  # '/dev/sdb' is the device name Linux gave to your OCI Block Volume
+      ignore_errors: yes  # If the disk is already formatted (from a previous run), skip this without failing
+
+
+    - name: Create PostgreSQL data directory
+      file:
+        path: "{{ data_dir }}"  # Uses the variable '/var/lib/postgresql'
+        state: directory #make sure this is not a file
+        mode: '0755'  # Sets permissions so users can read/execute
+
+    - name: Mount volume to Data Directory
+      mount:
+        path: "{{ data_dir }}"
+        src: /dev/sdb
+        fstype: ext4   # The file system type we formatted it with
+        state: mounted   # This mounts it NOW and also adds it to /etc/fstab so it persists after reboot.
+        # By mounting this before installing Postgres, all database files will be written
+        # directly to your external storage volume, not the boot disk.
+
+    # 2. INSTALL POSTGRESQL
+    - name: Install System Dependencies
+      apt:
+        update_cache: yes
+        name:
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2 # The python library Ansible needs to "talk" to the database engine
+          - acl       # Helper tool that lets Ansible switch from 'root' to 'postgres' user smoothly
+        state: present
+
+    - name: Ensure PostgreSQL service is running
+      service:
+        name: postgresql
+        state: started  # Starts the service immediately
+        enabled: yes   # Ensures the database auto-starts if the VM reboots
+
+    # 3. CONFIGURE DATABASE & USERS
+    - name: Create Database
+      community.postgresql.postgresql_db:
+        name: "{{ db_name }}"  # Creates 'inventory_db'
+        state: present
+      become: yes
+      become_user: postgres   # Switch from 'root' to 'postgres'. The DB engine ignores commands from root.
+
+    - name: Create Database User
+      community.postgresql.postgresql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"  # Sets password to 'airarabia'
+        state: present
+        role_attr_flags: SUPERUSER  # Grants admin rights to this user
+      become: yes
+      become_user: postgres   # Again, we must run this as the 'postgres' system user
+

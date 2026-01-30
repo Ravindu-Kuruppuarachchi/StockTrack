@@ -1,0 +1,57 @@
+---
+- name: Enable Remote Access for Hybrid Setup
+  hosts: db_servers
+  become: yes
+  vars:
+    postgres_version: "14"
+    company_ip: "202.124.182.98/32"  #public ip of ISA
+
+  tasks:
+  # By default, Postgres only listens to "localhost". We must tell it to listen to the public network card so it can hear my laptop.
+    - name: Allow remote connections in postgresql.conf
+      lineinfile:  # Searches for a line in a text file and replaces it
+        path: "/etc/postgresql/{{ postgres_version }}/main/postgresql.conf"
+        regexp: "^#?listen_addresses" # Look for a line that starts with 'listen_addresses',
+        line: "listen_addresses = '*'" # change it from localhost to *
+      notify: Restart Postgres
+
+
+    # 2. Rule for SSH Tunnel (The "Backup" Method)
+    # (requests via tunnel look like they come from localhost 127.0.0.1)
+    - name: Allow SSH Tunnel connections (Localhost)
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+        line: "host    all             all             127.0.0.1/32         scram-sha-256"
+        state: present
+      notify: Restart Postgres
+
+    # 3. Rule for Company Direct Access (The "Primary" Method)\
+    - name: Allow Company Public IP
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+        line: "host    all             all             {{ company_ip }}    scram-sha-256"
+        state: present
+      notify: Restart Postgres
+
+      
+ #the "Client Authentication" (HBA) file typically blocks strangers
+    - name: Allow password auth in pg_hba.conf
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+
+        # The Rule Breakdown:
+        # host          = Connect via network (TCP/IP)
+        # all           = Allow access to ALL databases
+        # all           = Allow access to ALL users
+        # 0.0.0.0/0     = Allow requests from ANY IP address in the world
+        # scram-sha-256 = Require a secure password login
+
+        line: "host    all             all             0.0.0.0/0            scram-sha-256"
+        state: absent  # Ensure this insecure rule is NOT present
+      notify: Restart Postgres
+
+  handlers:
+    - name: Restart Postgres
+      service:
+        name: postgresql
+        state: restarted
