@@ -70,7 +70,7 @@ myConfigMaps:
     suffix: "app-config"
     data:
       admin-email: "admin@airarabia.com"
-      database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+      database-url: "postgresql://postgres:airarabia@213.35.108.218:5432/inventory_db"
 
 secrets:
   postgresPassword: "airarabia" # Injected via Jenkinsfile
@@ -78,7 +78,7 @@ secrets:
 
 # --- DATABASE CONFIGURATION ---
 postgresql:
-  enabled: true
+  enabled: false
   image: 
     repository: docker.io/ravindukuruppuarachchi/inventory_project_db
     tag: "latest"

@@ -19,12 +19,12 @@ selectorLabels:
 # --- APPLICATION CONFIGURATION ---
 app:
   enabled: true
-  replicaCount: 5
+  replicaCount: 1
   containerPort: 8000  ## CANNOT EDIT
 
 image:
   repository: docker.io/ravindukuruppuarachchi/inventory_project_api
-  tag: "multistage"
+  tag: "latest"
   pullPolicy: IfNotPresent
 
 # --- SERVICES (Map Format) ---
@@ -52,7 +52,7 @@ myConfigMaps:
     suffix: "app-config"
     data:
       admin-email: "admin@airarabia.com"
-      database-url: "postgresql://postgres:airarabia@postgres-service:5432/inventory_db"
+      database-url: "postgresql://postgres:airarabia@213.35.108.218:5432/inventory_db"
 
       #removed database-url as db password is not here anymore
 

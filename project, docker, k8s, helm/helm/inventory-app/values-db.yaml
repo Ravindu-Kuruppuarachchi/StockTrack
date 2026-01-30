@@ -16,7 +16,7 @@ labels:
 
 # --- DATABASE CONFIGURATION ---
 postgresql:
-  enabled: true
+  enabled: false
   image:
     repository: docker.io/ravindukuruppuarachchi/inventory_project_db  # <--- CHANGED
     tag: "latest"  # <--- Will be overridden by Jenkins

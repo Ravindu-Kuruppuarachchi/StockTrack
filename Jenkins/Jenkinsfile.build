@@ -1,0 +1,98 @@
+// Filename: Jenkinsfile.build (In DevOps Repo)
+pipeline {
+    agent any // run on any available agent(node)/ place that runs the pipeline(built In node)
+
+    // to give a spesific agent run code : agent { label 'linux-worker' }
+    
+    parameters {
+        // Asking Where is the source code?
+        string(name: 'REPO_URL',defaultValue: 'git@github.com:Ravindu-Kuruppuarachchi/StockTrack.git', description: 'Git Repository URL')
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Branch to build')
+        
+        // What are we building?
+        choice(name: 'SERVICE', choices: ['App', 'Database'], description: 'Which service to build?')
+        
+        // Custom Tag logic
+        string(name: 'CUSTOM_TAG', defaultValue: '', description: 'Leave empty to use Build Number')
+    }
+
+    environment {
+        // Define Image Names
+        APP_IMAGE = 'ravindukuruppuarachchi/inventory_project_api'
+        DB_IMAGE  = 'ravindukuruppuarachchi/inventory_project_db'
+    }
+
+    stages {
+        stage('Checkout Application Code') {
+            steps {
+                // We checkout the APP code into a subfolder named 'source_code'
+                dir('source_code') {
+                    git branch: params.BRANCH, url: params.REPO_URL, credentialsId: 'github-ssh-key'
+                }
+            }
+        }
+
+        stage('Determine Configuration') {
+            steps {
+                script {
+                    // Select the correct Dockerfile and Image Name
+                    if (params.SERVICE == 'App') {
+                        env.DOCKERFILE = 'Dockerfile'
+                        env.IMAGE_NAME = "${APP_IMAGE}"
+                    } else {
+                        env.DOCKERFILE = 'Dockerfile.db'
+                        env.IMAGE_NAME = "${DB_IMAGE}"
+                    }
+
+                    // Set the custom Tag or build number as Tag
+                    if (params.CUSTOM_TAG != '') {
+                        env.IMAGE_TAG = params.CUSTOM_TAG
+                    } else {
+                        env.IMAGE_TAG = "${BUILD_NUMBER}"
+                    }
+                    
+                    echo "Configured to build ${env.IMAGE_NAME}:${env.IMAGE_TAG} using ${env.DOCKERFILE}"
+                }
+            }
+        }
+
+
+        stage('Unit Tests') {
+            steps {
+                dir('source_code') {
+                    script {
+                        echo "RUNNING UNIT TESTS"
+                        
+                        if (params.SERVICE == 'App') {
+                            // Example: Run Python tests
+                            echo "Running Pytest for Application..."
+                        } else {
+                            //skip tests for static DB image
+                            echo "Skipping tests for Database (Static Image)"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build & Push') {
+            steps {
+                dir('source_code') { 
+                    script {
+                        // Login to Docker Hub and Push the Image
+                        docker.withRegistry('', 'docker-hub-creds') {
+                            // Build the image using the selected variables
+                            def app = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", "-f ${env.DOCKERFILE} .")
+                            
+                            // Push specific tag
+                            app.push()
+                            
+                            // Push latest tag
+                            app.push("latest")
+                        }
+                    }
+                }
+            }
+        } 
+    } 
+}
