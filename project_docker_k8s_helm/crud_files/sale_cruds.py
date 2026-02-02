@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from datetime import date 
 from models import User, Supplier, Product, Order, Sale
 from typing import Optional
-from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
+from crud_files import product_cruds
 
 def get_all_sales(db: Session):
     return db.query(Sale).order_by(Sale.id.desc()).all()
@@ -12,12 +12,15 @@ def create_sale(db: Session, product_name: str, quantity: int, total_amount: flo
     if not product:
         return None
     
+    # Ensure product.id is properly captured before creating sale
+    product_id = product.id
+    
     new_sale = Sale(
         product_name=product_name,
         quantity=quantity,
         total_amount=total_amount,
         sale_date=date.today(),
-        product_id=product.id
+        product_id=product_id
     )
     db.add(new_sale)
     

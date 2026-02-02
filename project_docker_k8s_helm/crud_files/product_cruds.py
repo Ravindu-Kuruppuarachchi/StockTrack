@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from datetime import date 
 from models import User, Supplier, Product, Order, Sale
 from typing import Optional
-from crud_files import login_cruds,supplier_cruds, product_cruds,sale_cruds,order_cruds
+from crud_files import supplier_cruds
 
 
 def get_all_products(db: Session):
