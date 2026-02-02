@@ -8,7 +8,7 @@ RUN python -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY requirements.txt .
+COPY project_docker_k8s_helm/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # STAGE 2: Final Runtime
