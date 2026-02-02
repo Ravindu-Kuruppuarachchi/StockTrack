@@ -1,0 +1,40 @@
+---
+- name: Manage PostgreSQL Users
+  hosts: db_servers
+  become: yes  # Become 'root' first
+
+  vars_files:
+    - secrets.yml  # Loads variables from an external file for better organization
+  vars:
+    # --- USER CONFIGURATION LIST ---
+    # To add more users, just add new blocks to this list.
+    db_users_list:
+      - name: "ravindu"
+        password: "1234"  
+        # Permissions: LOGIN (connect), CREATEDB (make new dbs), SUPERUSER (admin)
+        flags: "LOGIN,CREATEDB"
+
+      - name: "postgres"
+        password: "{{ vault_db_password }}"
+        flags: "SUPERUSER"  # Full Admin Rights
+
+
+  tasks:
+    - name: Create PostgreSQL Users
+      community.postgresql.postgresql_user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        role_attr_flags: "{{ item.flags }}"
+        state: present
+      
+      # This runs the task once for every user in the list above
+      loop: "{{ db_users_list }}"
+      
+      # We must switch from 'root' to 'postgres' user to run SQL commands
+      become: yes
+      become_user: postgres
+
+
+
+
+

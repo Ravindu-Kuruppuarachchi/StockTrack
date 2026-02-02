@@ -52,7 +52,7 @@ myConfigMaps:
     suffix: "app-config"
     data:
       admin-email: "admin@airarabia.com"
-      database-url: "postgresql://postgres:airarabia@213.35.108.218:5432/inventory_db"
+      database-url: "postgresql://postgres:airarabia@138.2.89.113:5432/inventory_db"
 
       #removed database-url as db password is not here anymore
 

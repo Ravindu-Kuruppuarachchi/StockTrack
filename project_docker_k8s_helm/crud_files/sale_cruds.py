@@ -20,12 +20,13 @@ def create_sale(db: Session, product_name: str, quantity: int, total_amount: flo
         product_id=product.id
     )
     db.add(new_sale)
+    
+    # Update stock using the same product object
+    product.stocks -= quantity  # type: ignore
+    
+    # Commit both changes together
     db.commit()
     db.refresh(new_sale)
-
-    product = product_cruds.get_product_by_name(db, product_name)
-    product.stocks -= quantity  # type: ignore
-    db.commit() 
     return new_sale
 
 
