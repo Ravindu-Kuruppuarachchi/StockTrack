@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: airarabia
       POSTGRES_DB: inventory_db
     ports:
-      - "5433:5432"
+      # Host Port : Container Port
+      - "5433:5432" 
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,12 +22,15 @@ services:
       - inventory_net
 
   api:
-    build: .
+    build:
+      context: ../                                #  Steps back to parent folder
+      dockerfile: project_docker_k8s_helm/Dockerfile  # Points back down to file
     image: inventory_project_api:multistage
     container_name: inventory_api
     ports:
       - "8000:8000"
     environment:
+      # <--- CHANGE 2: Used 'db' instead of 'localhost', and port 5432 (internal port)
       DATABASE_URL: postgresql://postgres:airarabia@db:5432/inventory_db
     depends_on:
       db:
@@ -42,7 +46,3 @@ volumes:
 networks:
   inventory_net:
     driver: bridge
-
-
-
-
