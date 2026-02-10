@@ -1,0 +1,51 @@
+---
+- name: PostgreSQL Master Playbook
+  hosts: db_servers
+  become: yes
+  vars_files:
+    - secrets.yml  # Loads {{ vault_db_password }}
+
+  vars:
+    postgres_version: "14"
+    data_dir: "/var/lib/postgresql"
+    db_name: "inventory_db"
+    
+    # Network Variables
+    trusted_ips:
+      - "202.124.182.98/32"  # Company IP
+      - "127.0.0.1/32"       # SSH Tunnel
+
+    # User Variables
+    db_users_list:
+      - name: "postgres"
+        password: "{{ vault_db_password }}"
+        flags: "SUPERUSER"
+      - name: "ravindu"
+        password: "ariarabia"
+        flags: "LOGIN,CREATEDB"
+
+  tasks:
+    # TAG: install
+    # Runs storage setup and software installation.
+    - name: Run Installation Tasks
+      import_tasks: tasks/install.yml
+      tags: [install]
+
+    # TAG: network
+    # Runs config changes. Triggers restart ONLY if config changes.
+    - name: Run Network Configuration
+      import_tasks: tasks/network.yml
+      tags: [network]
+
+    # TAG: users
+    # Adds users. NEVER triggers a restart.
+    - name: Run User Management
+      import_tasks: tasks/users.yml
+      tags: [users]
+
+  handlers:
+    # Defined globally so 'network.yml' can trigger it
+    - name: Restart Postgres
+      service:
+        name: postgresql
+        state: restarted

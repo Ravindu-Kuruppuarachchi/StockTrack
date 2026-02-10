@@ -1,0 +1,49 @@
+---
+
+# 1. CONFIGURE STORAGE
+- name: Create ext4 filesystem on block volume
+  filesystem:
+    fstype: ext4
+    dev: /dev/sdb  # '/dev/sdb' is the device name Linux gave to your OCI Block Volume
+  ignore_errors: true  # If the disk is already formatted (from a previous run), skip this without failing
+
+
+- name: Create PostgreSQL data directory
+  file:
+    path: "{{ data_dir }}"  # Uses the variable '/var/lib/postgresql'
+    state: directory #make sure this is not a file
+    mode: '0755'  # Sets permissions so users can read/execute
+
+- name: Mount volume to Data Directory
+  mount:
+    path: "{{ data_dir }}"
+    src: /dev/sdb
+    fstype: ext4   # The file system type we formatted it with
+    state: mounted   # This mounts it NOW and also adds it to /etc/fstab so it persists after reboot.
+    # By mounting this before installing Postgres, all database files will be written
+    # directly to your external storage volume, not the boot disk.
+
+# 2. INSTALL POSTGRESQL
+- name: Install System Dependencies
+  apt:
+    update_cache: yes
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2 # The python library Ansible needs to "talk" to the database engine
+      - acl       # Helper tool that lets Ansible switch from 'root' to 'postgres' user smoothly
+    state: present
+
+- name: Ensure PostgreSQL service is running
+  service:
+    name: postgresql
+    state: started  # Starts the service immediately
+    enabled: yes   # Ensures the database auto-starts if the VM reboots
+
+# 3. CONFIGURE DATABASE & USERS
+- name: Create Database
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"  # Creates 'inventory_db'
+    state: present
+  become: true
+  become_user: postgres   # Switch from 'root' to 'postgres'. The DB engine ignores commands from root.

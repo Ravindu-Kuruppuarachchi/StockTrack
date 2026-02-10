@@ -24,7 +24,7 @@ services:
   api:
     build:
       context: ../                                #  Steps back to parent folder
-      dockerfile: project_docker_k8s_helm/Dockerfile  # Points back down to file
+      dockerfile: project_docker_k8s_helm/Dockerfile  # Points back down to file. had to do this to match the edited folder structure when using jenkins and git
     image: inventory_project_api:multistage
     container_name: inventory_api
     ports:

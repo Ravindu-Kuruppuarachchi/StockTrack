@@ -1,0 +1,21 @@
+---
+# 1. SETUP DATABASE
+- name: Ensure Database Exists
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+    state: present
+  become: true
+  become_user: postgres
+
+# 2. MANAGE USERS
+- name: Create or Update Users
+  community.postgresql.postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    role_attr_flags: "{{ item.flags }}"
+    state: present
+    # This runs the task once for every user in the list above
+  loop: "{{ db_users_list }}"
+  become: true
+   #We must switch from 'root' to 'postgres' user to run SQL commands
+  become_user: postgres
